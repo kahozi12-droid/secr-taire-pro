@@ -182,10 +182,12 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>{t("category")}</Label>
-            <CategoryPicker value={sub} onChange={setSub} />
-          </div>
+          {type === "incoming" && (
+            <div className="space-y-1">
+              <Label>{t("category")}</Label>
+              <CategoryPicker value={sub} onChange={setSub} />
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="desc">{t("description")}</Label>
