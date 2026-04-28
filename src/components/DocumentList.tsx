@@ -76,9 +76,16 @@ export function DocumentList({ type }: Props) {
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("allCategories")}</SelectItem>
-            {CATEGORIES.map((c) => (
-              <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
-            ))}
+            {type === "incoming"
+              ? CATEGORIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
+                ))
+              : (
+                <>
+                  <SelectItem value="ADM">{t("administration")}</SelectItem>
+                  <SelectItem value="TEC">{t("technical")}</SelectItem>
+                </>
+              )}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
