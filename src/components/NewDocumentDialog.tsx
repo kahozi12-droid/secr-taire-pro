@@ -60,9 +60,24 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!sub) return toast.error(t("subcategory") + " ?");
-    const found = findSub(sub);
-    if (!found) return toast.error("Invalid category");
+
+    let mainCode: string;
+    let subCode: string;
+    let colorCode: string;
+
+    if (type === "outgoing") {
+      const c = OUTGOING_CATEGORIES[folder];
+      mainCode = c.main;
+      subCode = c.sub;
+      colorCode = c.color;
+    } else {
+      if (!sub) return toast.error(t("subcategory") + " ?");
+      const found = findSub(sub);
+      if (!found) return toast.error("Invalid category");
+      mainCode = found.cat.code;
+      subCode = sub;
+      colorCode = found.cat.color;
+    }
 
     setBusy(true);
     try {
