@@ -14,16 +14,235 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      document_counter: {
+        Row: {
+          last_value: number
+          type: Database["public"]["Enums"]["doc_type"]
+          year: number
+        }
+        Insert: {
+          last_value?: number
+          type: Database["public"]["Enums"]["doc_type"]
+          year: number
+        }
+        Update: {
+          last_value?: number
+          type?: Database["public"]["Enums"]["doc_type"]
+          year?: number
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          category_main: string
+          category_sub: string
+          color: string
+          created_at: string
+          created_by: string
+          description: string | null
+          document_date: string
+          file_name: string | null
+          file_path: string | null
+          id: string
+          mime_type: string | null
+          outgoing_folder: Database["public"]["Enums"]["outgoing_folder"] | null
+          recipient: string | null
+          reference_code: string
+          sender: string | null
+          status: Database["public"]["Enums"]["doc_status"]
+          title: string
+          type: Database["public"]["Enums"]["doc_type"]
+          updated_at: string
+        }
+        Insert: {
+          category_main: string
+          category_sub: string
+          color: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          document_date?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          outgoing_folder?:
+            | Database["public"]["Enums"]["outgoing_folder"]
+            | null
+          recipient?: string | null
+          reference_code: string
+          sender?: string | null
+          status?: Database["public"]["Enums"]["doc_status"]
+          title: string
+          type: Database["public"]["Enums"]["doc_type"]
+          updated_at?: string
+        }
+        Update: {
+          category_main?: string
+          category_sub?: string
+          color?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          document_date?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          outgoing_folder?:
+            | Database["public"]["Enums"]["outgoing_folder"]
+            | null
+          recipient?: string | null
+          reference_code?: string
+          sender?: string | null
+          status?: Database["public"]["Enums"]["doc_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["doc_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      legal_texts: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          publication_date: string | null
+          reference: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          publication_date?: string | null
+          reference: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          publication_date?: string | null
+          reference?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          language: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id: string
+          language?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          language?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_reference_code: {
+        Args: {
+          _category_sub: string
+          _type: Database["public"]["Enums"]["doc_type"]
+        }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_director: { Args: { _user_id: string }; Returns: boolean }
+      is_secretary: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "secretary" | "director"
+      doc_status: "pending" | "processed" | "archived"
+      doc_type: "incoming" | "outgoing"
+      outgoing_folder: "technical" | "administration"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +369,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["secretary", "director"],
+      doc_status: ["pending", "processed", "archived"],
+      doc_type: ["incoming", "outgoing"],
+      outgoing_folder: ["technical", "administration"],
+    },
   },
 } as const
