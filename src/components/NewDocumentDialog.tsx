@@ -5,6 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
 import { findSub } from "@/lib/classification";
+
+// Outgoing documents use a simplified two-folder taxonomy (Technical / Administration).
+const OUTGOING_CATEGORIES = {
+  technical: { main: "TEC", sub: "TEC/OUT", color: "blue" as const },
+  administration: { main: "ADM", sub: "ADM/OUT", color: "green" as const },
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,16 +60,31 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!sub) return toast.error(t("subcategory") + " ?");
-    const found = findSub(sub);
-    if (!found) return toast.error("Invalid category");
+
+    let mainCode: string;
+    let subCode: string;
+    let colorCode: string;
+
+    if (type === "outgoing") {
+      const c = OUTGOING_CATEGORIES[folder];
+      mainCode = c.main;
+      subCode = c.sub;
+      colorCode = c.color;
+    } else {
+      if (!sub) return toast.error(t("subcategory") + " ?");
+      const found = findSub(sub);
+      if (!found) return toast.error("Invalid category");
+      mainCode = found.cat.code;
+      subCode = sub;
+      colorCode = found.cat.color;
+    }
 
     setBusy(true);
     try {
       // 1. Generate code
       const { data: code, error: codeErr } = await supabase.rpc("generate_reference_code", {
         _type: type,
-        _category_sub: sub,
+        _category_sub: subCode,
       });
       if (codeErr) throw codeErr;
 
@@ -90,9 +111,9 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
         type,
         title,
         description: description || null,
-        category_main: found.cat.code,
-        category_sub: sub,
-        color: found.cat.color,
+        category_main: mainCode,
+        category_sub: subCode,
+        color: colorCode,
         sender: type === "incoming" ? sender || null : null,
         recipient: type === "outgoing" ? recipient || null : null,
         outgoing_folder: type === "outgoing" ? folder : null,
@@ -161,10 +182,12 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>{t("category")}</Label>
-            <CategoryPicker value={sub} onChange={setSub} />
-          </div>
+          {type === "incoming" && (
+            <div className="space-y-1">
+              <Label>{t("category")}</Label>
+              <CategoryPicker value={sub} onChange={setSub} />
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="desc">{t("description")}</Label>
