@@ -84,7 +84,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
       // 1. Generate code
       const { data: code, error: codeErr } = await supabase.rpc("generate_reference_code", {
         _type: type,
-        _category_sub: sub,
+        _category_sub: subCode,
       });
       if (codeErr) throw codeErr;
 
