@@ -5,6 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
 import { findSub } from "@/lib/classification";
+
+// Outgoing documents use a simplified two-folder taxonomy (Technical / Administration).
+const OUTGOING_CATEGORIES = {
+  technical: { main: "TEC", sub: "TEC/OUT", color: "blue" as const },
+  administration: { main: "ADM", sub: "ADM/OUT", color: "green" as const },
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
