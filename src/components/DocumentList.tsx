@@ -32,6 +32,7 @@ export function DocumentList({ type }: Props) {
     setDocs(data ?? []);
   };
 
+  useEffect(() => { setCatFilter("all"); }, [type]);
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [type, catFilter, statusFilter]);
 
   const filtered = useMemo(() => {
