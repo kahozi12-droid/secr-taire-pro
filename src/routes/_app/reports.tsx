@@ -22,6 +22,8 @@ interface IncomingDoc {
   sender: string | null;
   title: string;
   description: string | null;
+  status: "pending" | "processed" | "archived";
+  file_path: string | null;
 }
 interface OutgoingDoc {
   id: string;
@@ -30,6 +32,8 @@ interface OutgoingDoc {
   recipient: string | null;
   title: string;
   description: string | null;
+  status: "pending" | "processed" | "archived";
+  file_path: string | null;
 }
 interface OtherTask {
   id: string;
