@@ -22,6 +22,8 @@ interface IncomingDoc {
   sender: string | null;
   title: string;
   description: string | null;
+  status: "pending" | "processed" | "archived";
+  file_path: string | null;
 }
 interface OutgoingDoc {
   id: string;
@@ -30,6 +32,8 @@ interface OutgoingDoc {
   recipient: string | null;
   title: string;
   description: string | null;
+  status: "pending" | "processed" | "archived";
+  file_path: string | null;
 }
 interface OtherTask {
   id: string;
@@ -57,13 +61,13 @@ function ReportsPage() {
       const [{ data: inc }, { data: out }, { data: tk }] = await Promise.all([
         supabase
           .from("documents")
-          .select("id,order_number,reference_code,sender,title,description")
+          .select("id,order_number,reference_code,sender,title,description,status,file_path")
           .eq("type", "incoming")
           .eq("document_date", date)
           .order("created_at"),
         supabase
           .from("documents")
-          .select("id,order_number,reference_code,recipient,title,description")
+          .select("id,order_number,reference_code,recipient,title,description,status,file_path")
           .eq("type", "outgoing")
           .eq("document_date", date)
           .order("created_at"),
@@ -87,6 +91,28 @@ function ReportsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Realtime: refresh report when any document for this date changes (e.g. status update)
+  useEffect(() => {
+    const channel = supabase
+      .channel(`report-${date}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "documents", filter: `document_date=eq.${date}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [date, load]);
+
+  const openDoc = async (filePath: string | null) => {
+    if (!filePath) return toast.error(t("noFile"));
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(filePath, 60 * 60);
+    if (error) return toast.error(error.message);
+    window.open(data.signedUrl, "_blank");
+  };
 
   const formattedDate = (() => {
     try {
@@ -243,13 +269,34 @@ function ReportsPage() {
           <tbody>
             {(incoming.length ? incoming : Array.from({ length: 5 })).map((d, i) => {
               const doc = d as IncomingDoc | undefined;
+              const treated = doc && (doc.status === "processed" || doc.status === "archived");
               return (
                 <tr key={doc?.id ?? `e-${i}`}>
                   <td className="border border-black p-1 text-center font-semibold">{i + 1}</td>
                   <td className="border border-black p-1 text-center">{doc?.order_number ?? ""}</td>
                   <td className="border border-black p-1">{doc?.sender ?? ""}</td>
-                  <td className="border border-black p-1">{doc ? doc.title + (doc.description ? ` — ${doc.description}` : "") : ""}</td>
-                  <td className="border border-black p-1 text-center">{doc ? "" : "-"}</td>
+                  <td className="border border-black p-1">
+                    {doc ? (
+                      doc.file_path ? (
+                        <button
+                          type="button"
+                          onClick={() => openDoc(doc.file_path)}
+                          className="text-left text-blue-700 underline hover:opacity-80 print:text-black print:no-underline"
+                        >
+                          {doc.title}{doc.description ? ` — ${doc.description}` : ""}
+                        </button>
+                      ) : (
+                        <span>{doc.title}{doc.description ? ` — ${doc.description}` : ""}</span>
+                      )
+                    ) : ""}
+                  </td>
+                  <td className="border border-black p-1 text-center">
+                    {doc ? (
+                      <span className={treated ? "font-semibold text-green-700" : "text-gray-600"}>
+                        {treated ? "✓ " + t("treated") : t("notTreated")}
+                      </span>
+                    ) : "-"}
+                  </td>
                 </tr>
               );
             })}
@@ -265,17 +312,40 @@ function ReportsPage() {
               <th className="w-24 border border-black p-1">{t("orderNumber")}</th>
               <th className="border border-black p-1">{t("recipient")}</th>
               <th className="border border-black p-1">{t("summary")}</th>
+              <th className="w-28 border border-black p-1">{t("observation")}</th>
             </tr>
           </thead>
           <tbody>
             {(outgoing.length ? outgoing : Array.from({ length: 5 })).map((d, i) => {
               const doc = d as OutgoingDoc | undefined;
+              const treated = doc && (doc.status === "processed" || doc.status === "archived");
               return (
                 <tr key={doc?.id ?? `s-${i}`}>
                   <td className="border border-black p-1 text-center font-semibold">{i + 1}</td>
                   <td className="border border-black p-1 text-center">{doc?.order_number ?? ""}</td>
                   <td className="border border-black p-1">{doc?.recipient ?? ""}</td>
-                  <td className="border border-black p-1">{doc ? doc.title + (doc.description ? ` — ${doc.description}` : "") : ""}</td>
+                  <td className="border border-black p-1">
+                    {doc ? (
+                      doc.file_path ? (
+                        <button
+                          type="button"
+                          onClick={() => openDoc(doc.file_path)}
+                          className="text-left text-blue-700 underline hover:opacity-80 print:text-black print:no-underline"
+                        >
+                          {doc.title}{doc.description ? ` — ${doc.description}` : ""}
+                        </button>
+                      ) : (
+                        <span>{doc.title}{doc.description ? ` — ${doc.description}` : ""}</span>
+                      )
+                    ) : ""}
+                  </td>
+                  <td className="border border-black p-1 text-center">
+                    {doc ? (
+                      <span className={treated ? "font-semibold text-green-700" : "text-gray-600"}>
+                        {treated ? "✓ " + t("treated") : t("notTreated")}
+                      </span>
+                    ) : "-"}
+                  </td>
                 </tr>
               );
             })}
