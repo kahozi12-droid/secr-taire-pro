@@ -45,6 +45,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
   const [recipient, setRecipient] = useState("");
   const [folder, setFolder] = useState<"technical" | "administration">("administration");
   const [docDate, setDocDate] = useState(new Date().toISOString().slice(0, 10));
+  const [orderNumber, setOrderNumber] = useState("");
 
   const reset = () => {
     setFile(null);
@@ -55,6 +56,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
     setRecipient("");
     setFolder("administration");
     setDocDate(new Date().toISOString().slice(0, 10));
+    setOrderNumber("");
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -118,6 +120,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
         recipient: type === "outgoing" ? recipient || null : null,
         outgoing_folder: type === "outgoing" ? folder : null,
         document_date: docDate,
+        order_number: orderNumber || null,
         file_path: filePath,
         file_name: fileName,
         mime_type: mimeType,
@@ -179,6 +182,11 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
             <div className="space-y-1">
               <Label htmlFor="docdate">{t("documentDate")}</Label>
               <Input id="docdate" type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} required />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="orderNumber">{t("orderNumber")}</Label>
+              <Input id="orderNumber" value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} maxLength={50} placeholder="ex: 001/2026" />
             </div>
           </div>
 
