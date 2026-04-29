@@ -234,6 +234,9 @@ export const translations = {
     snapshotSaved: "Report archived",
     archive: "Archives",
     selectDate: "Select a date",
+    treated: "Processed",
+    notTreated: "Pending",
+    noFile: "No file",
   },
 } as const;
 
