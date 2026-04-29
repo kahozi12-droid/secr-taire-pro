@@ -92,6 +92,28 @@ function ReportsPage() {
     void load();
   }, [load]);
 
+  // Realtime: refresh report when any document for this date changes (e.g. status update)
+  useEffect(() => {
+    const channel = supabase
+      .channel(`report-${date}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "documents", filter: `document_date=eq.${date}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [date, load]);
+
+  const openDoc = async (filePath: string | null) => {
+    if (!filePath) return toast.error(t("noFile"));
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(filePath, 60 * 60);
+    if (error) return toast.error(error.message);
+    window.open(data.signedUrl, "_blank");
+  };
+
   const formattedDate = (() => {
     try {
       return new Date(date + "T00:00:00").toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
