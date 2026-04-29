@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_reports: {
+        Row: {
+          generated_at: string
+          generated_by: string | null
+          id: string
+          payload: Json
+          report_date: string
+        }
+        Insert: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          payload: Json
+          report_date: string
+        }
+        Update: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          payload?: Json
+          report_date?: string
+        }
+        Relationships: []
+      }
       document_counter: {
         Row: {
           last_value: number
@@ -75,6 +99,7 @@ export type Database = {
           file_path: string | null
           id: string
           mime_type: string | null
+          order_number: string | null
           outgoing_folder: Database["public"]["Enums"]["outgoing_folder"] | null
           recipient: string | null
           reference_code: string
@@ -96,6 +121,7 @@ export type Database = {
           file_path?: string | null
           id?: string
           mime_type?: string | null
+          order_number?: string | null
           outgoing_folder?:
             | Database["public"]["Enums"]["outgoing_folder"]
             | null
@@ -119,6 +145,7 @@ export type Database = {
           file_path?: string | null
           id?: string
           mime_type?: string | null
+          order_number?: string | null
           outgoing_folder?:
             | Database["public"]["Enums"]["outgoing_folder"]
             | null
@@ -168,6 +195,39 @@ export type Database = {
           publication_date?: string | null
           reference?: string
           title?: string
+        }
+        Relationships: []
+      }
+      other_tasks: {
+        Row: {
+          created_at: string
+          created_by: string
+          detail: string
+          id: string
+          observation: string | null
+          position: number
+          task_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          detail: string
+          id?: string
+          observation?: string | null
+          position?: number
+          task_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          detail?: string
+          id?: string
+          observation?: string | null
+          position?: number
+          task_date?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -237,6 +297,7 @@ export type Database = {
       }
       is_director: { Args: { _user_id: string }; Returns: boolean }
       is_secretary: { Args: { _user_id: string }; Returns: boolean }
+      snapshot_daily_report: { Args: { _date?: string }; Returns: string }
     }
     Enums: {
       app_role: "secretary" | "director"
