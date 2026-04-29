@@ -183,6 +183,11 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
               <Label htmlFor="docdate">{t("documentDate")}</Label>
               <Input id="docdate" type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} required />
             </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="orderNumber">{t("orderNumber")}</Label>
+              <Input id="orderNumber" value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} maxLength={50} placeholder="ex: 001/2026" />
+            </div>
           </div>
 
           {type === "incoming" && (
