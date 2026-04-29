@@ -121,6 +121,9 @@ export const translations = {
     snapshotSaved: "Rapport archivé",
     archive: "Archives",
     selectDate: "Sélectionner une date",
+    treated: "Traité",
+    notTreated: "Non traité",
+    noFile: "Aucun fichier",
   },
   en: {
     appName: "Director's Secretariat",
