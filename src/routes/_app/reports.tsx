@@ -61,13 +61,13 @@ function ReportsPage() {
       const [{ data: inc }, { data: out }, { data: tk }] = await Promise.all([
         supabase
           .from("documents")
-          .select("id,order_number,reference_code,sender,title,description")
+          .select("id,order_number,reference_code,sender,title,description,status,file_path")
           .eq("type", "incoming")
           .eq("document_date", date)
           .order("created_at"),
         supabase
           .from("documents")
-          .select("id,order_number,reference_code,recipient,title,description")
+          .select("id,order_number,reference_code,recipient,title,description,status,file_path")
           .eq("type", "outgoing")
           .eq("document_date", date)
           .order("created_at"),
