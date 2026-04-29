@@ -45,6 +45,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
   const [recipient, setRecipient] = useState("");
   const [folder, setFolder] = useState<"technical" | "administration">("administration");
   const [docDate, setDocDate] = useState(new Date().toISOString().slice(0, 10));
+  const [orderNumber, setOrderNumber] = useState("");
 
   const reset = () => {
     setFile(null);
@@ -55,6 +56,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
     setRecipient("");
     setFolder("administration");
     setDocDate(new Date().toISOString().slice(0, 10));
+    setOrderNumber("");
   };
 
   const submit = async (e: React.FormEvent) => {
