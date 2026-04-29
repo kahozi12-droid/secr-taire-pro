@@ -120,6 +120,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props
         recipient: type === "outgoing" ? recipient || null : null,
         outgoing_folder: type === "outgoing" ? folder : null,
         document_date: docDate,
+        order_number: orderNumber || null,
         file_path: filePath,
         file_name: fileName,
         mime_type: mimeType,
