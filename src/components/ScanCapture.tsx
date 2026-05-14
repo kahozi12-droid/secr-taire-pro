@@ -17,16 +17,21 @@ export function ScanCapture({ value, onChange }: Props) {
   const handleFile = (f: File | null) => {
     onChange(f);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(f && f.type.startsWith("image/") ? URL.createObjectURL(f) : null);
+    setPreviewUrl(f && (f.type.startsWith("image/") || f.type === "application/pdf") ? URL.createObjectURL(f) : null);
   };
+
+  const isPdf = value?.type === "application/pdf";
+  const isImage = value?.type.startsWith("image/");
 
   return (
     <div className="space-y-3">
       <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 p-6 text-center">
         {value ? (
           <div className="space-y-3">
-            {previewUrl ? (
+            {isImage && previewUrl ? (
               <img src={previewUrl} alt="preview" className="mx-auto max-h-64 rounded-md border border-border object-contain" />
+            ) : isPdf && previewUrl ? (
+              <iframe title={value.name} src={previewUrl} className="mx-auto h-80 w-full rounded-md border border-border bg-card" />
             ) : (
               <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-md bg-card text-xs text-muted-foreground">
                 {value.name.split(".").pop()?.toUpperCase()}
