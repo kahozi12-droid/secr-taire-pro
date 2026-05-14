@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,13 +40,9 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated, initial
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(initialFile ?? null);
 
-  // Sync prefilled file when dialog reopens with new initialFile
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useState(() => {});
-  if (initialFile && open && !file) {
-    // lazy sync without effect to avoid extra renders
-    setFile(initialFile);
-  }
+  useEffect(() => {
+    if (open && initialFile) setFile(initialFile);
+  }, [open, initialFile]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [sub, setSub] = useState("");
