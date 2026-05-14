@@ -31,13 +31,22 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   type: "incoming" | "outgoing";
   onCreated: () => void;
+  initialFile?: File | null;
 }
 
-export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props) {
+export function NewDocumentDialog({ open, onOpenChange, type, onCreated, initialFile }: Props) {
   const { t } = useI18n();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(initialFile ?? null);
+
+  // Sync prefilled file when dialog reopens with new initialFile
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useState(() => {});
+  if (initialFile && open && !file) {
+    // lazy sync without effect to avoid extra renders
+    setFile(initialFile);
+  }
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [sub, setSub] = useState("");
