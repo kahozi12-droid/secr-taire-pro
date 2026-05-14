@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,13 +31,18 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   type: "incoming" | "outgoing";
   onCreated: () => void;
+  initialFile?: File | null;
 }
 
-export function NewDocumentDialog({ open, onOpenChange, type, onCreated }: Props) {
+export function NewDocumentDialog({ open, onOpenChange, type, onCreated, initialFile }: Props) {
   const { t } = useI18n();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(initialFile ?? null);
+
+  useEffect(() => {
+    if (open && initialFile) setFile(initialFile);
+  }, [open, initialFile]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [sub, setSub] = useState("");
