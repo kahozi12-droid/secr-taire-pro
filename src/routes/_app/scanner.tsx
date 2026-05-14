@@ -65,8 +65,8 @@ function ScannerPage() {
     if (!handle) return;
     setScanning(true);
     try {
-      // @ts-expect-error iterator on FileSystemDirectoryHandle
-      for await (const entry of handle.values()) {
+      const iter = (handle as unknown as { values: () => AsyncIterable<FileSystemHandle> }).values();
+      for await (const entry of iter) {
         if (entry.kind === "file") {
           await importFile(entry as FileSystemFileHandle);
         }

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppScannerRouteImport } from './routes/_app/scanner'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppOutgoingRouteImport } from './routes/_app/outgoing'
 import { Route as AppLegalRouteImport } from './routes/_app/legal'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppScannerRoute = AppScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppReportsRoute = AppReportsRouteImport.update({
   id: '/reports',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/legal': typeof AppLegalRoute
   '/outgoing': typeof AppOutgoingRoute
   '/reports': typeof AppReportsRoute
+  '/scanner': typeof AppScannerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/legal': typeof AppLegalRoute
   '/outgoing': typeof AppOutgoingRoute
   '/reports': typeof AppReportsRoute
+  '/scanner': typeof AppScannerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_app/legal': typeof AppLegalRoute
   '/_app/outgoing': typeof AppOutgoingRoute
   '/_app/reports': typeof AppReportsRoute
+  '/_app/scanner': typeof AppScannerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/outgoing'
     | '/reports'
+    | '/scanner'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/outgoing'
     | '/reports'
+    | '/scanner'
   id:
     | '__root__'
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_app/legal'
     | '/_app/outgoing'
     | '/_app/reports'
+    | '/_app/scanner'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/scanner': {
+      id: '/_app/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof AppScannerRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/reports': {
       id: '/_app/reports'
@@ -211,6 +230,7 @@ interface AppRouteChildren {
   AppLegalRoute: typeof AppLegalRoute
   AppOutgoingRoute: typeof AppOutgoingRoute
   AppReportsRoute: typeof AppReportsRoute
+  AppScannerRoute: typeof AppScannerRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -220,6 +240,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLegalRoute: AppLegalRoute,
   AppOutgoingRoute: AppOutgoingRoute,
   AppReportsRoute: AppReportsRoute,
+  AppScannerRoute: AppScannerRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
