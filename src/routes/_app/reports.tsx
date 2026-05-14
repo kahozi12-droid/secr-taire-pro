@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, Printer, Save, Plus, Trash2 } from "lucide-react";
+import { Loader2, Printer, Save, Plus, Trash2, FileText, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,12 +8,39 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import drcFlag from "@/assets/drc-flag.jpg";
 import saemapeLogo from "@/assets/saemape-logo.jpg";
 
 export const Route = createFileRoute("/_app/reports")({
   component: ReportsPage,
 });
+
+type ReportCategory = "mission" | "technical" | "financial" | "administrative";
+
+const FOLDERS: { key: ReportCategory; labelKey: "folderMission" | "folderTechnical" | "folderFinancial" | "folderAdministrative" }[] = [
+  { key: "mission", labelKey: "folderMission" },
+  { key: "technical", labelKey: "folderTechnical" },
+  { key: "financial", labelKey: "folderFinancial" },
+  { key: "administrative", labelKey: "folderAdministrative" },
+];
+
+interface ReportDoc {
+  id: string;
+  category: ReportCategory;
+  title: string;
+  description: string | null;
+  report_date: string;
+  file_path: string | null;
+  file_name: string | null;
+  read_by_director: boolean;
+  read_at: string | null;
+}
 
 interface IncomingDoc {
   id: string;
@@ -44,6 +71,315 @@ interface OtherTask {
 }
 
 function ReportsPage() {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("reports")}</h1>
+      </div>
+      <Tabs defaultValue="daily" className="w-full">
+        <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="daily">{t("folderDaily")}</TabsTrigger>
+          {FOLDERS.map((f) => (
+            <TabsTrigger key={f.key} value={f.key}>
+              {t(f.labelKey)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="daily" className="mt-4">
+          <DailyReport />
+        </TabsContent>
+        {FOLDERS.map((f) => (
+          <TabsContent key={f.key} value={f.key} className="mt-4">
+            <ReportFolder category={f.key} labelKey={f.labelKey} />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+}
+
+/* -------------------------- Folder of reports -------------------------- */
+
+function ReportFolder({
+  category,
+  labelKey,
+}: {
+  category: ReportCategory;
+  labelKey: "folderMission" | "folderTechnical" | "folderFinancial" | "folderAdministrative";
+}) {
+  const { t } = useI18n();
+  const { role } = useAuth();
+  const isSecretary = role === "secretary";
+  const isDirector = role === "director";
+  const [items, setItems] = useState<ReportDoc[] | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const load = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("report_documents")
+      .select("id,category,title,description,report_date,file_path,file_name,read_by_director,read_at")
+      .eq("category", category)
+      .order("report_date", { ascending: false });
+    if (error) return toast.error(error.message);
+    setItems((data ?? []) as ReportDoc[]);
+  }, [category]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  // realtime
+  useEffect(() => {
+    const ch = supabase
+      .channel(`reports-${category}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "report_documents", filter: `category=eq.${category}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [category, load]);
+
+  const openFile = async (path: string | null) => {
+    if (!path) return toast.error(t("noFile"));
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+    if (error) return toast.error(error.message);
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const toggleRead = async (r: ReportDoc) => {
+    const next = !r.read_by_director;
+    const { error } = await supabase
+      .from("report_documents")
+      .update({
+        read_by_director: next,
+        read_at: next ? new Date().toISOString() : null,
+        read_by: next ? (await supabase.auth.getUser()).data.user?.id ?? null : null,
+      })
+      .eq("id", r.id);
+    if (error) return toast.error(error.message);
+  };
+
+  const remove = async (r: ReportDoc) => {
+    if (!confirm(t("confirmDelete"))) return;
+    if (r.file_path) {
+      await supabase.storage.from("documents").remove([r.file_path]);
+    }
+    const { error } = await supabase.from("report_documents").delete().eq("id", r.id);
+    if (error) return toast.error(error.message);
+  };
+
+  // group by year
+  const byYear = (items ?? []).reduce<Record<string, ReportDoc[]>>((acc, r) => {
+    const y = (r.report_date ?? "").slice(0, 4) || String(new Date().getFullYear());
+    (acc[y] ??= []).push(r);
+    return acc;
+  }, {});
+  const years = Object.keys(byYear).sort((a, b) => Number(b) - Number(a));
+  const currentYear = String(new Date().getFullYear());
+  if (years.length === 0) years.push(currentYear);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold">{t(labelKey)}</h2>
+        {isSecretary && (
+          <Button onClick={() => setOpen(true)} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            {t("newReport")}
+          </Button>
+        )}
+      </div>
+
+      {items === null ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {t("loading")}
+        </div>
+      ) : (
+        <Accordion type="multiple" defaultValue={[currentYear]} className="w-full">
+          {years.map((year) => {
+            const list = byYear[year] ?? [];
+            return (
+              <AccordionItem key={year} value={year}>
+                <AccordionTrigger className="text-base font-medium">
+                  {t(labelKey)} {year} <span className="ml-2 text-xs text-muted-foreground">({list.length})</span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {list.length === 0 ? (
+                    <p className="py-4 text-sm text-muted-foreground">{t("noReports")}</p>
+                  ) : (
+                    <ul className="divide-y rounded-md border">
+                      {list.map((r) => (
+                        <li key={r.id} className="flex flex-wrap items-center gap-3 p-3">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => openFile(r.file_path)}
+                              className="text-left font-medium hover:underline"
+                            >
+                              {r.title}
+                              <ExternalLink className="ml-1 inline h-3 w-3 opacity-60" />
+                            </button>
+                            <div className="text-xs text-muted-foreground">
+                              {r.report_date}
+                              {r.description ? ` — ${r.description}` : ""}
+                            </div>
+                          </div>
+                          {r.read_by_director ? (
+                            <Badge variant="default" className="gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              {t("readByDirector")}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="gap-1">
+                              <Circle className="h-3 w-3" />
+                              {t("notReadByDirector")}
+                            </Badge>
+                          )}
+                          {isDirector && (
+                            <Button size="sm" variant="outline" onClick={() => toggleRead(r)}>
+                              {r.read_by_director ? t("markUnread") : t("markRead")}
+                            </Button>
+                          )}
+                          {isSecretary && (
+                            <Button size="icon" variant="ghost" onClick={() => remove(r)} aria-label="delete">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
+
+      <NewReportDialog open={open} onOpenChange={setOpen} category={category} onSaved={() => void load()} />
+    </div>
+  );
+}
+
+function NewReportDialog({
+  open,
+  onOpenChange,
+  category,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  category: ReportCategory;
+  onSaved: () => void;
+}) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const today = format(new Date(), "yyyy-MM-dd");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [reportDate, setReportDate] = useState(today);
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setTitle("");
+    setDescription("");
+    setReportDate(today);
+    setFile(null);
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !title.trim()) return;
+    setBusy(true);
+    try {
+      let filePath: string | null = null;
+      let fileName: string | null = null;
+      let mimeType: string | null = null;
+      if (file) {
+        const year = reportDate.slice(0, 4);
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `reports/${category}/${year}/${Date.now()}-${title}.${ext}`.replace(/\s+/g, "_");
+        const { error } = await supabase.storage.from("documents").upload(path, file, { contentType: file.type });
+        if (error) throw error;
+        filePath = path;
+        fileName = file.name;
+        mimeType = file.type;
+      }
+      const { error } = await supabase.from("report_documents").insert({
+        category,
+        title,
+        description: description || null,
+        report_date: reportDate,
+        file_path: filePath,
+        file_name: fileName,
+        mime_type: mimeType,
+        created_by: user.id,
+      });
+      if (error) throw error;
+      toast.success(t("saved"));
+      reset();
+      onOpenChange(false);
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("saveError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("addReport")}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div className="space-y-1">
+            <Label>{t("title")}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </div>
+          <div className="space-y-1">
+            <Label>{t("reportDate")}</Label>
+            <Input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} required />
+          </div>
+          <div className="space-y-1">
+            <Label>{t("description")}</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          </div>
+          <div className="space-y-1">
+            <Label>{t("file")}</Label>
+            <Input
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("save")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* -------------------------- Daily report (existing) -------------------------- */
+
+function DailyReport() {
   const { t, lang } = useI18n();
   const { role, user } = useAuth();
   const isSecretary = role === "secretary";
@@ -92,7 +428,6 @@ function ReportsPage() {
     void load();
   }, [load]);
 
-  // Realtime: refresh report when any document for this date changes (e.g. status update)
   useEffect(() => {
     const channel = supabase
       .channel(`report-${date}`)
@@ -188,12 +523,8 @@ function ReportsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-end justify-between gap-3 print:hidden">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("reports")}</h1>
-          <p className="text-sm text-muted-foreground">{t("dailyReport")}</p>
-        </div>
+        <p className="text-sm text-muted-foreground">{t("dailyReport")}</p>
         <div className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t("selectDate")}</label>
@@ -219,9 +550,7 @@ function ReportsPage() {
         </div>
       )}
 
-      {/* Report Document */}
       <div className="report-page mx-auto max-w-[210mm] bg-white p-8 text-black shadow-sm print:max-w-none print:p-0 print:shadow-none">
-        {/* Letterhead */}
         <table className="w-full border-collapse border border-black text-[11px]">
           <tbody>
             <tr>
@@ -248,13 +577,9 @@ function ReportsPage() {
           </tbody>
         </table>
 
-        {/* Title */}
         <h2 className="mt-6 text-center text-base font-bold underline">{t("reportTitle")}</h2>
-
-        {/* Date */}
         <div className="mt-4 text-right text-sm font-bold underline">{formattedDate}</div>
 
-        {/* Section 1: Incoming */}
         <h3 className="mt-4 text-sm font-bold underline">1. {t("incomingMail")}</h3>
         <table className="mt-2 w-full border-collapse border border-black text-[11px]">
           <thead className="bg-gray-200">
@@ -303,7 +628,6 @@ function ReportsPage() {
           </tbody>
         </table>
 
-        {/* Section 2: Outgoing */}
         <h3 className="mt-4 text-sm font-bold underline">2. {t("outgoingMail")}</h3>
         <table className="mt-2 w-full border-collapse border border-black text-[11px]">
           <thead className="bg-gray-200">
@@ -352,7 +676,6 @@ function ReportsPage() {
           </tbody>
         </table>
 
-        {/* Section 3: Other treatments */}
         <div className="mt-4 flex items-center justify-between">
           <h3 className="text-sm font-bold underline">3. {t("otherTreatments")}</h3>
           {isSecretary && (
