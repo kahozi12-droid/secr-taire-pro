@@ -255,6 +255,57 @@ export type Database = {
         }
         Relationships: []
       }
+      report_documents: {
+        Row: {
+          category: Database["public"]["Enums"]["report_category"]
+          created_at: string
+          created_by: string
+          description: string | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          mime_type: string | null
+          read_at: string | null
+          read_by: string | null
+          read_by_director: boolean
+          report_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["report_category"]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          read_at?: string | null
+          read_by?: string | null
+          read_by_director?: boolean
+          report_date?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["report_category"]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          read_at?: string | null
+          read_by?: string | null
+          read_by_director?: boolean
+          report_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -304,6 +355,7 @@ export type Database = {
       doc_status: "pending" | "processed" | "archived"
       doc_type: "incoming" | "outgoing"
       outgoing_folder: "technical" | "administration"
+      report_category: "mission" | "technical" | "financial" | "administrative"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -435,6 +487,7 @@ export const Constants = {
       doc_status: ["pending", "processed", "archived"],
       doc_type: ["incoming", "outgoing"],
       outgoing_folder: ["technical", "administration"],
+      report_category: ["mission", "technical", "financial", "administrative"],
     },
   },
 } as const
