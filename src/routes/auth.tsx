@@ -125,6 +125,18 @@ function AuthPage() {
                   <Label htmlFor="si-pw">{t("password")}</Label>
                   <Input id="si-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
+                <div className="space-y-1">
+                  <Label htmlFor="si-type">{t("accountType")}</Label>
+                  <Select value={accountType} onValueChange={(v) => setAccountType(v as "secretary" | "director")}>
+                    <SelectTrigger id="si-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="director">{t("accountDirector")}</SelectItem>
+                      <SelectItem value="secretary">{t("accountSecretary")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("signIn")}
