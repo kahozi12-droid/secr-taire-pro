@@ -30,6 +30,8 @@ function ScannerPage() {
   const { t, lang } = useI18n();
   const { role } = useAuth();
   const printer = printerForRole(role);
+  const roleKey: "main" | "director" = role === "director" ? "director" : "main";
+  const folderStatus = usePrinterFolderStatus();
 
   const [supported] = useState(
     typeof window !== "undefined" && "showDirectoryPicker" in window,
