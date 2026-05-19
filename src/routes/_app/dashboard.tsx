@@ -76,6 +76,41 @@ function Dashboard() {
         <StatCard icon={CheckCircle2} label={t("processedToday")} value={stats?.processedToday ?? 0} accent="bg-success/15 text-success" />
       </div>
 
+      {/* Director printer & folder status */}
+      <Link
+        to="/scanner"
+        className="grid gap-3 rounded-xl border border-border bg-card p-4 hover:shadow-[var(--shadow-card)] sm:grid-cols-2"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <Printer className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground">{t("directorPrinterStatus")}</p>
+            <p className="truncate text-sm font-semibold">{PRINTERS.director.name}</p>
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className={`inline-block h-2 w-2 rounded-full ${directorLinked ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
+              <span className="text-xs">{directorLinked ? t("connected") : t("notConnected")}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <FolderOpen className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground">{t("directorFolderStatus")}</p>
+            <p className="truncate text-sm font-semibold">
+              {folderStatus.director ?? t("notConnected")}
+            </p>
+            {!directorLinked && role !== "director" && (
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("connectFromDirectorAccount")}</p>
+            )}
+          </div>
+        </div>
+      </Link>
+
+
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
           <h2 className="mb-3 text-sm font-semibold">{t("quickAccess")}</h2>
