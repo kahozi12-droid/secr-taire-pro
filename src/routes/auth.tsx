@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -22,6 +23,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [accountType, setAccountType] = useState<"secretary" | "director">("secretary");
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard" });
@@ -44,7 +46,7 @@ function AuthPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: fullName },
+        data: { full_name: fullName, account_type: accountType },
       },
     });
     setBusy(false);
@@ -126,6 +128,18 @@ function AuthPage() {
                 <div className="space-y-1">
                   <Label htmlFor="su-pw">{t("password")}</Label>
                   <Input id="su-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="su-type">{t("accountType")}</Label>
+                  <Select value={accountType} onValueChange={(v) => setAccountType(v as "secretary" | "director")}>
+                    <SelectTrigger id="su-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="director">{t("accountDirector")}</SelectItem>
+                      <SelectItem value="secretary">{t("accountSecretary")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
