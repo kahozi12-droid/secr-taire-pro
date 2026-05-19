@@ -32,10 +32,27 @@ function AuthPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setBusy(false);
+      toast.error(error.message);
+      return;
+    }
+    // Verify the selected account type matches the user's actual role
+    const uid = data.user?.id;
+    if (uid) {
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+      const userRoles = (roles ?? []).map((r) => r.role);
+      const expected = accountType;
+      if (!userRoles.includes(expected)) {
+        await supabase.auth.signOut();
+        setBusy(false);
+        toast.error(t("accountTypeMismatch"));
+        return;
+      }
+    }
     setBusy(false);
-    if (error) toast.error(error.message);
-    else navigate({ to: "/dashboard" });
+    navigate({ to: "/dashboard" });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -107,6 +124,18 @@ function AuthPage() {
                 <div className="space-y-1">
                   <Label htmlFor="si-pw">{t("password")}</Label>
                   <Input id="si-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="si-type">{t("accountType")}</Label>
+                  <Select value={accountType} onValueChange={(v) => setAccountType(v as "secretary" | "director")}>
+                    <SelectTrigger id="si-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="director">{t("accountDirector")}</SelectItem>
+                      <SelectItem value="secretary">{t("accountSecretary")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

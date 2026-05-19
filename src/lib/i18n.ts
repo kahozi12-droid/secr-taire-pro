@@ -156,6 +156,7 @@ export const translations = {
     accountType: "Type de compte",
     accountDirector: "Compte Directeur",
     accountSecretary: "Compte Secrétaire",
+    accountTypeMismatch: "Ce compte ne correspond pas au type sélectionné.",
     // Reports folders
     tabDaily: "Journalier",
     folderMission: "Rapports des Missions",
@@ -317,6 +318,7 @@ export const translations = {
     accountType: "Account type",
     accountDirector: "Director account",
     accountSecretary: "Secretary account",
+    accountTypeMismatch: "This account does not match the selected type.",
     tabDaily: "Daily",
     folderMission: "Mission Reports",
     folderTechnical: "Technical Reports",
