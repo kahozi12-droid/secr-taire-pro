@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart } from "lucide-react";
+import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/providers/AuthProvider";
 import { CategoryBadge } from "@/components/CategoryPicker";
+import { PRINTERS } from "@/lib/printers";
+import { usePrinterFolderStatus } from "@/lib/printerStatus";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_app/dashboard")({
