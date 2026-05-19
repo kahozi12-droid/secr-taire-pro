@@ -153,6 +153,9 @@ export const translations = {
     directorFolderStatus: "Dossier scanner du Directeur",
     connectFromDirectorAccount: "Connectez-vous au compte directeur puis ouvrez le Scanner pour configurer.",
     yourPrinter: "Votre imprimante",
+    accountType: "Type de compte",
+    accountDirector: "Compte Directeur",
+    accountSecretary: "Compte Secrétaire",
     // Reports folders
     tabDaily: "Journalier",
     folderMission: "Rapports des Missions",
