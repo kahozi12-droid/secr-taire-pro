@@ -46,7 +46,7 @@ function AuthPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: fullName },
+        data: { full_name: fullName, account_type: accountType },
       },
     });
     setBusy(false);
