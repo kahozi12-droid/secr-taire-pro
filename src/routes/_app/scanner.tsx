@@ -95,6 +95,7 @@ function ScannerPage() {
       });
       dirHandleRef.current = handle;
       setFolderName(handle.name);
+      setFolderStatus(roleKey, handle.name);
       seenRef.current = new Set();
       setPending([]);
       await scanFolder();
