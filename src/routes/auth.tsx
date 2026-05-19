@@ -23,6 +23,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [accountType, setAccountType] = useState<"secretary" | "director">("secretary");
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard" });
