@@ -178,6 +178,64 @@ function ScannerPage() {
 
   return (
     <div className="space-y-6">
+      {/* Attribution overview — both printers */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Printer className="h-4 w-4" /> {t("printerAssignment")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">{t("printerAssignmentHint")}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(["main", "director"] as const).map((key) => {
+              const p = PRINTERS[key];
+              const isCurrent = key === roleKey;
+              const linked = folderStatus[key];
+              return (
+                <div
+                  key={key}
+                  className={[
+                    "rounded-md border p-3",
+                    isCurrent ? "border-primary bg-primary/5" : "border-border bg-background",
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{p.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {key === "director" ? t("printerDirectorRole") : t("printerMainRole")}
+                      </p>
+                      <p className="mt-1 font-mono text-[10px] text-muted-foreground">{p.id}</p>
+                    </div>
+                    <Badge variant={linked ? "default" : "secondary"} className="shrink-0">
+                      <span
+                        className={[
+                          "mr-1.5 inline-block h-2 w-2 rounded-full",
+                          linked ? "bg-emerald-500" : "bg-muted-foreground/50",
+                        ].join(" ")}
+                      />
+                      {linked ? t("connected") : t("notConnected")}
+                    </Badge>
+                  </div>
+                  {linked && (
+                    <p className="mt-2 truncate text-xs text-muted-foreground">
+                      <FolderOpen className="mr-1 inline h-3 w-3" />
+                      {linked}
+                    </p>
+                  )}
+                  {isCurrent && (
+                    <p className="mt-2 text-[11px] uppercase tracking-wide text-primary">
+                      {t("yourPrinter")}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Printer header */}
       <Card>
         <CardHeader className="pb-3">
