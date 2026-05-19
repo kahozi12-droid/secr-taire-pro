@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart } from "lucide-react";
+import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/providers/AuthProvider";
 import { CategoryBadge } from "@/components/CategoryPicker";
+import { PRINTERS } from "@/lib/printers";
+import { usePrinterFolderStatus } from "@/lib/printerStatus";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -35,6 +37,8 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: typeof Inbox; la
 function Dashboard() {
   const { t, lang } = useI18n();
   const { role, fullName } = useAuth();
+  const folderStatus = usePrinterFolderStatus();
+  const directorLinked = !!folderStatus.director;
   const [stats, setStats] = useState<Stats | null>(null);
   const [recent, setRecent] = useState<Array<{ id: string; reference_code: string; title: string; type: string; category_sub: string; created_at: string }>>([]);
   const [activity, setActivity] = useState<Array<{ id: string; action: string; created_at: string; details: unknown }>>([]);
@@ -71,6 +75,41 @@ function Dashboard() {
         <StatCard icon={Clock} label={t("pending")} value={stats?.pending ?? 0} accent="bg-[var(--cat-csp-bg)] text-[var(--cat-csp)]" />
         <StatCard icon={CheckCircle2} label={t("processedToday")} value={stats?.processedToday ?? 0} accent="bg-success/15 text-success" />
       </div>
+
+      {/* Director printer & folder status */}
+      <Link
+        to="/scanner"
+        className="grid gap-3 rounded-xl border border-border bg-card p-4 hover:shadow-[var(--shadow-card)] sm:grid-cols-2"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <Printer className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground">{t("directorPrinterStatus")}</p>
+            <p className="truncate text-sm font-semibold">{PRINTERS.director.name}</p>
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className={`inline-block h-2 w-2 rounded-full ${directorLinked ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
+              <span className="text-xs">{directorLinked ? t("connected") : t("notConnected")}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <FolderOpen className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground">{t("directorFolderStatus")}</p>
+            <p className="truncate text-sm font-semibold">
+              {folderStatus.director ?? t("notConnected")}
+            </p>
+            {!directorLinked && role !== "director" && (
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("connectFromDirectorAccount")}</p>
+            )}
+          </div>
+        </div>
+      </Link>
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
