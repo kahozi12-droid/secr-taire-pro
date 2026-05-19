@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
-import { printerForRole } from "@/lib/printers";
+import { printerForRole, PRINTERS } from "@/lib/printers";
+import { setFolderStatus, usePrinterFolderStatus } from "@/lib/printerStatus";
 import { NewDocumentDialog } from "@/components/NewDocumentDialog";
 
 export const Route = createFileRoute("/_app/scanner")({
