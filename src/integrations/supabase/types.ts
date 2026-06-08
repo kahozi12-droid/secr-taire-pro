@@ -162,6 +162,115 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_annotations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          legal_text_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          legal_text_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          legal_text_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_annotations_legal_text_id_fkey"
+            columns: ["legal_text_id"]
+            isOneToOne: false
+            referencedRelation: "legal_texts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          legal_text_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          legal_text_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          legal_text_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_favorites_legal_text_id_fkey"
+            columns: ["legal_text_id"]
+            isOneToOne: false
+            referencedRelation: "legal_texts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_text_references: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          note: string | null
+          relation: string
+          source_id: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          note?: string | null
+          relation?: string
+          source_id: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          note?: string | null
+          relation?: string
+          source_id?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_text_references_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "legal_texts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_text_references_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "legal_texts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_texts: {
         Row: {
           category: string
@@ -174,6 +283,8 @@ export type Database = {
           publication_date: string | null
           reference: string
           search_vector: unknown
+          source_url: string | null
+          text_type: string | null
           title: string
         }
         Insert: {
@@ -187,6 +298,8 @@ export type Database = {
           publication_date?: string | null
           reference: string
           search_vector?: unknown
+          source_url?: string | null
+          text_type?: string | null
           title: string
         }
         Update: {
@@ -200,6 +313,8 @@ export type Database = {
           publication_date?: string | null
           reference?: string
           search_vector?: unknown
+          source_url?: string | null
+          text_type?: string | null
           title?: string
         }
         Relationships: []
