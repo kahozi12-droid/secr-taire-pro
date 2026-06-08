@@ -97,10 +97,10 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Inbox} label={t("totalIncoming")} value={stats?.incoming ?? 0} accent="bg-[var(--cat-sae-bg)] text-[var(--cat-sae)]" />
-        <StatCard icon={Send} label={t("totalOutgoing")} value={stats?.outgoing ?? 0} accent="bg-[var(--cat-eta-bg)] text-[var(--cat-eta)]" />
-        <StatCard icon={Clock} label={t("pending")} value={stats?.pending ?? 0} accent="bg-[var(--cat-csp-bg)] text-[var(--cat-csp)]" />
-        <StatCard icon={CheckCircle2} label={t("processedToday")} value={stats?.processedToday ?? 0} accent="bg-success/15 text-success" />
+        <StatCard icon={Inbox} label={t("totalIncoming")} value={stats?.incoming ?? 0} accent="bg-[var(--cat-sae-bg)] text-[var(--cat-sae)]" to="/incoming" />
+        <StatCard icon={Send} label={t("totalOutgoing")} value={stats?.outgoing ?? 0} accent="bg-[var(--cat-eta-bg)] text-[var(--cat-eta)]" to="/outgoing" />
+        <StatCard icon={Clock} label={t("pending")} value={stats?.pending ?? 0} accent="bg-[var(--cat-csp-bg)] text-[var(--cat-csp)]" to="/pending" />
+        <StatCard icon={CheckCircle2} label={t("processedToday")} value={stats?.processedToday ?? 0} accent="bg-success/15 text-success" to="/processed-today" />
       </div>
 
       {/* Director printer & folder status */}
