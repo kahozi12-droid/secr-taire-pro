@@ -15,9 +15,10 @@ export type DocumentRow = Tables<"documents">;
 interface Props {
   doc: DocumentRow;
   onChanged: () => void;
+  showPostpone?: boolean;
 }
 
-export function DocumentRowCard({ doc, onChanged }: Props) {
+export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
   const { t, lang } = useI18n();
   const { role } = useAuth();
   const isSecretary = role === "secretary";
@@ -83,6 +84,12 @@ export function DocumentRowCard({ doc, onChanged }: Props) {
             <Button variant="ghost" size="sm" onClick={() => updateStatus("archived")}>
               <Archive className="mr-1.5 h-3.5 w-3.5" />
               {t("markArchived")}
+            </Button>
+          )}
+          {showPostpone && doc.status === "pending" && (
+            <Button variant="ghost" size="sm" onClick={() => toast.success(lang === "fr" ? "Document reporté" : "Document postponed")}>
+              <Clock className="mr-1.5 h-3.5 w-3.5" />
+              {lang === "fr" ? "Plus tard" : "Later"}
             </Button>
           )}
         </div>
