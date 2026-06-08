@@ -64,9 +64,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     .join("")
     .toUpperCase();
 
+  const visibleNav = NAV.filter((n) => (role === "director" ? n.directorAllowed : n.secretaryAllowed));
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
+      {/* Sidebar (desktop) */}
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--primary-glow)] text-primary-foreground shadow-[var(--shadow-elegant)]">
@@ -79,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV.filter((n) => (role === "director" ? n.directorAllowed : n.secretaryAllowed)).map((n) => {
+          {visibleNav.map((n) => {
             const active = location.pathname.startsWith(n.to);
             const Icon = n.icon;
             return (
@@ -117,9 +119,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 md:px-6">
-          <div className="md:hidden">
-            <p className="text-sm font-semibold">{t("appName")}</p>
+        <header
+          className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-4 md:px-6"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <div className="flex items-center gap-2 md:hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--primary-glow)] text-primary-foreground">
+              <ShieldCheck className="h-4 w-4" />
+            </div>
+            <p className="text-sm font-semibold truncate">{t("appName")}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <DropdownMenu>
@@ -142,9 +150,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {/* Mobile bottom nav */}
-        <nav className="flex border-b border-border bg-card md:hidden overflow-x-auto">
-          {NAV.filter((n) => (role === "director" ? n.directorAllowed : n.secretaryAllowed)).map((n) => {
+        <main
+          className="flex-1 overflow-auto p-4 md:p-6"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
+        >
+          {children}
+        </main>
+
+        {/* Mobile bottom nav (app-like) */}
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden overflow-x-auto"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          {visibleNav.map((n) => {
             const active = location.pathname.startsWith(n.to);
             const Icon = n.icon;
             return (
@@ -152,19 +170,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={n.to}
                 to={n.to}
                 className={[
-                  "flex flex-col items-center gap-1 px-4 py-2 text-xs whitespace-nowrap",
-                  active ? "text-primary border-b-2 border-primary" : "text-muted-foreground",
+                  "flex min-w-[68px] flex-1 flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] whitespace-nowrap",
+                  active ? "text-primary" : "text-muted-foreground",
                 ].join(" ")}
               >
-                <Icon className="h-4 w-4" />
-                {t(n.labelKey)}
+                <Icon className={["h-5 w-5", active ? "scale-110" : ""].join(" ")} />
+                <span className="leading-none">{t(n.labelKey)}</span>
               </Link>
             );
           })}
         </nav>
-
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
 }
+
