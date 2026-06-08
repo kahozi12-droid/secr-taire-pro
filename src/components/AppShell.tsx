@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   Printer,
   Search,
+  Settings as SettingsIcon,
+
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
