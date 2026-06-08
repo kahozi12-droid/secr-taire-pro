@@ -15,6 +15,7 @@ export type DocumentRow = Tables<"documents">;
 interface Props {
   doc: DocumentRow;
   onChanged: () => void;
+  showPostpone?: boolean;
 }
 
 export function DocumentRowCard({ doc, onChanged }: Props) {
