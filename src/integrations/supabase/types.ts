@@ -103,6 +103,7 @@ export type Database = {
           outgoing_folder: Database["public"]["Enums"]["outgoing_folder"] | null
           recipient: string | null
           reference_code: string
+          search_vector: unknown
           sender: string | null
           status: Database["public"]["Enums"]["doc_status"]
           title: string
@@ -127,6 +128,7 @@ export type Database = {
             | null
           recipient?: string | null
           reference_code: string
+          search_vector?: unknown
           sender?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
           title: string
@@ -151,6 +153,7 @@ export type Database = {
             | null
           recipient?: string | null
           reference_code?: string
+          search_vector?: unknown
           sender?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
           title?: string
@@ -170,6 +173,7 @@ export type Database = {
           id: string
           publication_date: string | null
           reference: string
+          search_vector: unknown
           title: string
         }
         Insert: {
@@ -182,6 +186,7 @@ export type Database = {
           id?: string
           publication_date?: string | null
           reference: string
+          search_vector?: unknown
           title: string
         }
         Update: {
@@ -194,6 +199,7 @@ export type Database = {
           id?: string
           publication_date?: string | null
           reference?: string
+          search_vector?: unknown
           title?: string
         }
         Relationships: []
