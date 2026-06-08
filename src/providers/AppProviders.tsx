@@ -37,14 +37,20 @@ function I18nProvider({ children }: { children: ReactNode }) {
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <AuthProvider>
           {children}
+          <ConnectionStatus />
           <Toaster richColors position="top-right" />
         </AuthProvider>
       </I18nProvider>
     </QueryClientProvider>
   );
 }
+
