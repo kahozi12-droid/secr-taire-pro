@@ -2,15 +2,12 @@
 export const LEGAL_TEXT_TYPES = [
   "Constitution",
   "Loi",
-  "Loi organique",
   "Ordonnance",
   "Décret",
   "Arrêté",
   "Circulaire",
-  "Règlement",
-  "Décision",
-  "Convention",
-  "Jurisprudence",
+  "Note technique",
+  "Avis technique",
   "Autre",
 ] as const;
 
