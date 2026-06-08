@@ -18,7 +18,7 @@ interface Props {
   showPostpone?: boolean;
 }
 
-export function DocumentRowCard({ doc, onChanged }: Props) {
+export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
   const { t, lang } = useI18n();
   const { role } = useAuth();
   const isSecretary = role === "secretary";
