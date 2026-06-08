@@ -72,11 +72,8 @@ function SettingsPage() {
         .maybeSingle();
       if (data) {
         setName(data.full_name ?? "");
-        // @ts-expect-error - new columns until types regenerate
         setJobTitle(data.job_title ?? "");
-        // @ts-expect-error
         setPhone(data.phone ?? "");
-        // @ts-expect-error
         const p = (data.preferences ?? {}) as Preferences;
         setPrefs((prev) => ({ ...prev, ...p, language: p.language ?? lang }));
       }
