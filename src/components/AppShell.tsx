@@ -10,6 +10,7 @@ import {
   Languages,
   ShieldCheck,
   Printer,
+  Search,
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
@@ -33,6 +34,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard, directorAllowed: true, secretaryAllowed: true },
   { to: "/scanner", labelKey: "scanner", icon: Printer, directorAllowed: true, secretaryAllowed: true },
+  { to: "/search", labelKey: "searchNav", icon: Search, directorAllowed: true, secretaryAllowed: true },
   { to: "/incoming", labelKey: "incoming", icon: Inbox, directorAllowed: true, secretaryAllowed: true },
   { to: "/outgoing", labelKey: "outgoing", icon: Send, directorAllowed: true, secretaryAllowed: true },
   { to: "/legal", labelKey: "legalLibrary", icon: BookOpen, directorAllowed: true, secretaryAllowed: true },

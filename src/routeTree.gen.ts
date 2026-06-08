@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppScannerRouteImport } from './routes/_app/scanner'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppOutgoingRouteImport } from './routes/_app/outgoing'
@@ -33,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSearchRoute = AppSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppScannerRoute = AppScannerRouteImport.update({
   id: '/scanner',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/outgoing': typeof AppOutgoingRoute
   '/reports': typeof AppReportsRoute
   '/scanner': typeof AppScannerRoute
+  '/search': typeof AppSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/outgoing': typeof AppOutgoingRoute
   '/reports': typeof AppReportsRoute
   '/scanner': typeof AppScannerRoute
+  '/search': typeof AppSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/_app/outgoing': typeof AppOutgoingRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/scanner': typeof AppScannerRoute
+  '/_app/search': typeof AppSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/outgoing'
     | '/reports'
     | '/scanner'
+    | '/search'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/outgoing'
     | '/reports'
     | '/scanner'
+    | '/search'
   id:
     | '__root__'
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/_app/outgoing'
     | '/_app/reports'
     | '/_app/scanner'
+    | '/_app/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -170,6 +182,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/search': {
+      id: '/_app/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AppSearchRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/scanner': {
       id: '/_app/scanner'
@@ -231,6 +250,7 @@ interface AppRouteChildren {
   AppOutgoingRoute: typeof AppOutgoingRoute
   AppReportsRoute: typeof AppReportsRoute
   AppScannerRoute: typeof AppScannerRoute
+  AppSearchRoute: typeof AppSearchRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -241,6 +261,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutgoingRoute: AppOutgoingRoute,
   AppReportsRoute: AppReportsRoute,
   AppScannerRoute: AppScannerRoute,
+  AppSearchRoute: AppSearchRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -253,12 +274,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
