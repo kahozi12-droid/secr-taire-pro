@@ -40,11 +40,11 @@ function ActivityPage() {
 
         <TabsContent value="recent" className="space-y-2">
           <p className="text-sm text-muted-foreground">{rows ? `${rows.length} ${t("recentActivity").toLowerCase()}` : t("loading")}</p>
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+            <table className="w-full min-w-[560px] text-sm">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-2 text-left">{t("date")}</th>
+                  <th className="px-3 py-2 text-left whitespace-nowrap">{t("date")}</th>
                   <th className="px-3 py-2 text-left">{t("actions")}</th>
                   <th className="px-3 py-2 text-left">{t("type")}</th>
                   <th className="px-3 py-2 text-left">{t("code")}</th>
@@ -55,7 +55,7 @@ function ActivityPage() {
                   const det = (r.details ?? {}) as { reference_code?: string; title?: string; from?: string; to?: string };
                   return (
                     <tr key={r.id} className="border-t border-border">
-                      <td className="px-3 py-2 text-muted-foreground">{format(new Date(r.created_at), "dd/MM/yyyy HH:mm")}</td>
+                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{format(new Date(r.created_at), "dd/MM/yyyy HH:mm")}</td>
                       <td className="px-3 py-2">{r.action}{det.from && det.to && <span className="ml-1 text-xs text-muted-foreground">({det.from} → {det.to})</span>}</td>
                       <td className="px-3 py-2 text-muted-foreground">{r.entity_type ?? "—"}</td>
                       <td className="px-3 py-2 font-mono text-xs">{det.reference_code ?? "—"}</td>
@@ -66,6 +66,7 @@ function ActivityPage() {
               </tbody>
             </table>
           </div>
+
         </TabsContent>
 
         <TabsContent value="stats">
