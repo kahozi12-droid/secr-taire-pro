@@ -86,6 +86,12 @@ export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
               {t("markArchived")}
             </Button>
           )}
+          {showPostpone && doc.status === "pending" && (
+            <Button variant="ghost" size="sm" onClick={() => toast.success(lang === "fr" ? "Document reporté" : "Document postponed")}>
+              <Clock className="mr-1.5 h-3.5 w-3.5" />
+              {lang === "fr" ? "Plus tard" : "Later"}
+            </Button>
+          )}
         </div>
       </div>
     </div>
