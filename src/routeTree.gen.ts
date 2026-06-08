@@ -16,6 +16,8 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppScannerRouteImport } from './routes/_app/scanner'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
+import { Route as AppProcessedTodayRouteImport } from './routes/_app/processed-today'
+import { Route as AppPendingRouteImport } from './routes/_app/pending'
 import { Route as AppOutgoingRouteImport } from './routes/_app/outgoing'
 import { Route as AppLegalRouteImport } from './routes/_app/legal'
 import { Route as AppIncomingRouteImport } from './routes/_app/incoming'
@@ -56,6 +58,16 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProcessedTodayRoute = AppProcessedTodayRouteImport.update({
+  id: '/processed-today',
+  path: '/processed-today',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPendingRoute = AppPendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOutgoingRoute = AppOutgoingRouteImport.update({
   id: '/outgoing',
   path: '/outgoing',
@@ -90,6 +102,8 @@ export interface FileRoutesByFullPath {
   '/incoming': typeof AppIncomingRoute
   '/legal': typeof AppLegalRoute
   '/outgoing': typeof AppOutgoingRoute
+  '/pending': typeof AppPendingRoute
+  '/processed-today': typeof AppProcessedTodayRoute
   '/reports': typeof AppReportsRoute
   '/scanner': typeof AppScannerRoute
   '/search': typeof AppSearchRoute
@@ -103,6 +117,8 @@ export interface FileRoutesByTo {
   '/incoming': typeof AppIncomingRoute
   '/legal': typeof AppLegalRoute
   '/outgoing': typeof AppOutgoingRoute
+  '/pending': typeof AppPendingRoute
+  '/processed-today': typeof AppProcessedTodayRoute
   '/reports': typeof AppReportsRoute
   '/scanner': typeof AppScannerRoute
   '/search': typeof AppSearchRoute
@@ -118,6 +134,8 @@ export interface FileRoutesById {
   '/_app/incoming': typeof AppIncomingRoute
   '/_app/legal': typeof AppLegalRoute
   '/_app/outgoing': typeof AppOutgoingRoute
+  '/_app/pending': typeof AppPendingRoute
+  '/_app/processed-today': typeof AppProcessedTodayRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/scanner': typeof AppScannerRoute
   '/_app/search': typeof AppSearchRoute
@@ -133,6 +151,8 @@ export interface FileRouteTypes {
     | '/incoming'
     | '/legal'
     | '/outgoing'
+    | '/pending'
+    | '/processed-today'
     | '/reports'
     | '/scanner'
     | '/search'
@@ -146,6 +166,8 @@ export interface FileRouteTypes {
     | '/incoming'
     | '/legal'
     | '/outgoing'
+    | '/pending'
+    | '/processed-today'
     | '/reports'
     | '/scanner'
     | '/search'
@@ -160,6 +182,8 @@ export interface FileRouteTypes {
     | '/_app/incoming'
     | '/_app/legal'
     | '/_app/outgoing'
+    | '/_app/pending'
+    | '/_app/processed-today'
     | '/_app/reports'
     | '/_app/scanner'
     | '/_app/search'
@@ -223,6 +247,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/processed-today': {
+      id: '/_app/processed-today'
+      path: '/processed-today'
+      fullPath: '/processed-today'
+      preLoaderRoute: typeof AppProcessedTodayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pending': {
+      id: '/_app/pending'
+      path: '/pending'
+      fullPath: '/pending'
+      preLoaderRoute: typeof AppPendingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outgoing': {
       id: '/_app/outgoing'
       path: '/outgoing'
@@ -267,6 +305,8 @@ interface AppRouteChildren {
   AppIncomingRoute: typeof AppIncomingRoute
   AppLegalRoute: typeof AppLegalRoute
   AppOutgoingRoute: typeof AppOutgoingRoute
+  AppPendingRoute: typeof AppPendingRoute
+  AppProcessedTodayRoute: typeof AppProcessedTodayRoute
   AppReportsRoute: typeof AppReportsRoute
   AppScannerRoute: typeof AppScannerRoute
   AppSearchRoute: typeof AppSearchRoute
@@ -279,6 +319,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppIncomingRoute: AppIncomingRoute,
   AppLegalRoute: AppLegalRoute,
   AppOutgoingRoute: AppOutgoingRoute,
+  AppPendingRoute: AppPendingRoute,
+  AppProcessedTodayRoute: AppProcessedTodayRoute,
   AppReportsRoute: AppReportsRoute,
   AppScannerRoute: AppScannerRoute,
   AppSearchRoute: AppSearchRoute,
@@ -295,3 +337,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
