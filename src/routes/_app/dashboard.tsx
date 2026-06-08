@@ -20,9 +20,21 @@ interface Stats {
   processedToday: number;
 }
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: typeof Inbox; label: string; value: number; accent: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  accent,
+  to,
+}: {
+  icon: typeof Inbox;
+  label: string;
+  value: number;
+  accent: string;
+  to?: string;
+}) {
+  const body = (
+    <>
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{label}</p>
         <div className={`flex h-9 w-9 items-center justify-center rounded-md ${accent}`}>
@@ -30,6 +42,21 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: typeof Inbox; la
         </div>
       </div>
       <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
+    </>
+  );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="block rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-md"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      {body}
     </div>
   );
 }
