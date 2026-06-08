@@ -354,24 +354,36 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           full_name: string
           id: string
+          job_title: string | null
           language: string
+          phone: string | null
+          preferences: Json
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           full_name?: string
           id: string
+          job_title?: string | null
           language?: string
+          phone?: string | null
+          preferences?: Json
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           full_name?: string
           id?: string
+          job_title?: string | null
           language?: string
+          phone?: string | null
+          preferences?: Json
           updated_at?: string
         }
         Relationships: []

@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   Printer,
   Search,
+  Settings as SettingsIcon,
+
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useI18n } from "@/lib/i18n";
@@ -40,6 +42,8 @@ const NAV: NavItem[] = [
   { to: "/legal", labelKey: "legalLibrary", icon: BookOpen, directorAllowed: true, secretaryAllowed: true },
   { to: "/activity", labelKey: "activity", icon: Activity, directorAllowed: true, secretaryAllowed: true },
   { to: "/reports", labelKey: "reports", icon: FileBarChart, directorAllowed: true, secretaryAllowed: true },
+  { to: "/settings", labelKey: "settings", icon: SettingsIcon, directorAllowed: true, secretaryAllowed: true },
+
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
