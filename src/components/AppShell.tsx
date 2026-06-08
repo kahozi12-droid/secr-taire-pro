@@ -42,6 +42,8 @@ const NAV: NavItem[] = [
   { to: "/legal", labelKey: "legalLibrary", icon: BookOpen, directorAllowed: true, secretaryAllowed: true },
   { to: "/activity", labelKey: "activity", icon: Activity, directorAllowed: true, secretaryAllowed: true },
   { to: "/reports", labelKey: "reports", icon: FileBarChart, directorAllowed: true, secretaryAllowed: true },
+  { to: "/settings", labelKey: "settings", icon: SettingsIcon, directorAllowed: true, secretaryAllowed: true },
+
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
