@@ -99,11 +99,24 @@ function saveFlags(f: FeatureFlags) {
   window.localStorage.setItem(FLAGS_KEY, JSON.stringify(f));
 }
 
+interface DetectedDevice {
+  name: string;
+  source: "USB" | "Bluetooth" | "Réseau";
+  details: string;
+  kind: DeviceKind;
+  folder?: string;
+}
+
 export default function PrinterManager() {
   const caps = useMemo(detectBrowser, []);
   const [devices, setDevices] = useState<DeviceEntry[]>([]);
   const [flags, setFlags] = useState<FeatureFlags>(DEFAULT_FLAGS);
   const [editing, setEditing] = useState<DeviceEntry | null>(null);
+  const [detected, setDetected] = useState<DetectedDevice[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [networkBase, setNetworkBase] = useState("192.168.1");
+  const hasUsb = typeof navigator !== "undefined" && "usb" in navigator;
+  const hasBluetooth = typeof navigator !== "undefined" && "bluetooth" in navigator;
   const [form, setForm] = useState<DeviceEntry>({
     id: "",
     name: "",
