@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle, Radar, Usb, Bluetooth, Wifi } from "lucide-react";
+import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle, Radar, Usb, Bluetooth, Wifi, Server, AlertTriangle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type DeviceKind = "printer" | "scanner" | "multifunction";
@@ -266,6 +266,44 @@ export default function PrinterManager() {
     }
   };
 
+  const detectLocalAgent = async () => {
+    const endpoints = [
+      "http://localhost:7777/printers",
+      "http://127.0.0.1:7777/printers",
+    ];
+    for (const url of endpoints) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 1500);
+        const res = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!res.ok) continue;
+        const list = (await res.json()) as Array<{
+          name: string;
+          uri?: string;
+          location?: string;
+          type?: DeviceKind;
+        }>;
+        const found: DetectedDevice[] = list.map((p) => ({
+          name: p.name,
+          source: "Réseau",
+          details: p.uri || p.location || "agent local",
+          kind: p.type ?? "printer",
+        }));
+        if (found.length) {
+          setDetected((d) => [...found, ...d]);
+          toast.success(`${found.length} imprimante(s) trouvée(s) via l'agent local`);
+          return;
+        }
+        toast.info("Agent local connecté, mais aucune imprimante installée");
+        return;
+      } catch {
+        /* try next */
+      }
+    }
+    toast.error("Agent local introuvable sur localhost:7777");
+  };
+
   const fillFromDetected = (d: DetectedDevice) => {
     setForm((f) => ({
       ...f,
@@ -277,9 +315,46 @@ export default function PrinterManager() {
     toast.info("Formulaire pré-rempli");
   };
 
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+  const mixedContentBlocked = isHttps; // HTTPS → http://LAN is always blocked
+  const showEnvWarning = caps.inIframe || mixedContentBlocked;
+
+
 
   return (
     <div className="space-y-6">
+      {showEnvWarning && (
+        <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="space-y-2 text-sm">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
+                Détection limitée dans cet environnement
+              </p>
+              <ul className="ml-4 list-disc text-xs text-amber-900/80 dark:text-amber-200/80">
+                {caps.inIframe && (
+                  <li>
+                    L'app est chargée dans une <strong>iframe</strong> : USB / Bluetooth sont bloqués
+                    par le navigateur. Ouvrez dans un nouvel onglet.
+                  </li>
+                )}
+                {mixedContentBlocked && (
+                  <li>
+                    L'app est servie en <strong>HTTPS</strong> : le scan réseau direct
+                    (<code>http://192.168.x.x</code>) est bloqué par la règle <em>mixed content</em>.
+                    Utilisez l'<strong>agent local</strong> ci-dessous (exempt de cette règle sur
+                    <code> localhost</code>).
+                  </li>
+                )}
+              </ul>
+              <Button size="sm" variant="outline" onClick={openInNewTab}>
+                <ExternalLink className="mr-2 h-4 w-4" /> Ouvrir dans un nouvel onglet
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Browser capabilities */}
       <Card>
         <CardHeader>
@@ -416,10 +491,13 @@ export default function PrinterManager() {
             <Button variant="outline" onClick={detectBluetooth} disabled={!hasBluetooth}>
               <Bluetooth className="mr-2 h-4 w-4" /> Détecter via Bluetooth
             </Button>
-            <Button variant="outline" onClick={detectNetwork} disabled={scanning}>
+            <Button variant="outline" onClick={detectNetwork} disabled={scanning || mixedContentBlocked}>
               <Wifi className="mr-2 h-4 w-4" /> {scanning ? "Analyse…" : "Scan réseau (IPP)"}
             </Button>
-            {networkBase && (
+            <Button onClick={detectLocalAgent}>
+              <Server className="mr-2 h-4 w-4" /> Détecter via agent local
+            </Button>
+            {!mixedContentBlocked && (
               <Input
                 className="w-48"
                 value={networkBase}
@@ -428,9 +506,22 @@ export default function PrinterManager() {
               />
             )}
           </div>
+
+          <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p className="mb-1 font-medium text-foreground">Agent local (recommandé)</p>
+            <p>
+              Installez un petit service sur le poste qui expose les imprimantes système à
+              <code className="mx-1">http://localhost:7777/printers</code> (format JSON :
+              <code> [{`{name, uri, location, type}`}]</code>). Sur Windows/macOS/Linux, un script
+              Node/Python utilisant CUPS, IPP ou la commande <code>lpstat -p</code> suffit. C'est la
+              seule méthode fiable depuis une app HTTPS sans extension navigateur.
+            </p>
+          </div>
+
           {!hasUsb && !hasBluetooth && (
             <p className="text-xs text-muted-foreground">
-              WebUSB et Web Bluetooth ne sont disponibles que dans Chrome, Edge et Opera (hors aperçu/iframe).
+              WebUSB et Web Bluetooth ne sont disponibles que dans Chrome, Edge et Opera
+              (hors aperçu/iframe).
             </p>
           )}
           {detected.length > 0 && (
