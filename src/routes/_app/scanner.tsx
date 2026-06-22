@@ -285,12 +285,20 @@ function ScannerPage() {
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">{t("folderHint")}</p>
           {!supported && (
-            <p className="text-sm text-destructive">{t("folderUnsupported")}</p>
+            <p className="text-sm text-muted-foreground">{t("folderUnsupported")}</p>
           )}
           <div className="flex flex-wrap gap-2">
             <Button onClick={connect} disabled={!supported} variant={folderName ? "outline" : "default"}>
               {folderName ? <FolderOpen className="mr-2 h-4 w-4" /> : <Folder className="mr-2 h-4 w-4" />}
               {folderName ? t("reconnectFolder") : t("connectFolder")}
+            </Button>
+            <Button onClick={() => filesInputRef.current?.click()} variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              {t("importFiles")}
+            </Button>
+            <Button onClick={() => folderInputRef.current?.click()} variant="outline">
+              <Folder className="mr-2 h-4 w-4" />
+              {t("importFolder")}
             </Button>
             {folderName && (
               <Button onClick={scanFolder} variant="outline" disabled={scanning}>
@@ -305,6 +313,24 @@ function ScannerPage() {
               </span>
             )}
           </div>
+          <input
+            ref={filesInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.bmp,.webp"
+            className="hidden"
+            onChange={onFilesPicked}
+          />
+          <input
+            ref={folderInputRef}
+            type="file"
+            multiple
+            // @ts-expect-error non-standard but widely supported
+            webkitdirectory=""
+            directory=""
+            className="hidden"
+            onChange={onFilesPicked}
+          />
         </CardContent>
       </Card>
 
