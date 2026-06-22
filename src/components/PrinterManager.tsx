@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle } from "lucide-react";
+import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle, Radar, Usb, Bluetooth, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 type DeviceKind = "printer" | "scanner" | "multifunction";
@@ -99,11 +99,24 @@ function saveFlags(f: FeatureFlags) {
   window.localStorage.setItem(FLAGS_KEY, JSON.stringify(f));
 }
 
+interface DetectedDevice {
+  name: string;
+  source: "USB" | "Bluetooth" | "Réseau";
+  details: string;
+  kind: DeviceKind;
+  folder?: string;
+}
+
 export default function PrinterManager() {
   const caps = useMemo(detectBrowser, []);
   const [devices, setDevices] = useState<DeviceEntry[]>([]);
   const [flags, setFlags] = useState<FeatureFlags>(DEFAULT_FLAGS);
   const [editing, setEditing] = useState<DeviceEntry | null>(null);
+  const [detected, setDetected] = useState<DetectedDevice[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [networkBase, setNetworkBase] = useState("192.168.1");
+  const hasUsb = typeof navigator !== "undefined" && "usb" in navigator;
+  const hasBluetooth = typeof navigator !== "undefined" && "bluetooth" in navigator;
   const [form, setForm] = useState<DeviceEntry>({
     id: "",
     name: "",
@@ -173,6 +186,97 @@ export default function PrinterManager() {
   const openInNewTab = () => {
     window.open(window.location.href, "_blank", "noopener,noreferrer");
   };
+
+  const detectUsb = async () => {
+    try {
+      // @ts-expect-error WebUSB
+      const dev = await navigator.usb.requestDevice({ filters: [{ classCode: 7 }] });
+      const name = dev.productName || `USB ${dev.vendorId}:${dev.productId}`;
+      const item: DetectedDevice = {
+        name,
+        source: "USB",
+        details: `VID ${dev.vendorId?.toString(16)} / PID ${dev.productId?.toString(16)}`,
+        kind: "printer",
+      };
+      setDetected((d) => [item, ...d.filter((x) => x.name !== name)]);
+      toast.success(`Détecté : ${name}`);
+    } catch {
+      toast.error("Aucun périphérique sélectionné");
+    }
+  };
+
+  const detectBluetooth = async () => {
+    try {
+      // @ts-expect-error WebBluetooth
+      const dev = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"],
+      });
+      const name = dev.name || "Périphérique Bluetooth";
+      const item: DetectedDevice = {
+        name,
+        source: "Bluetooth",
+        details: dev.id || "BT",
+        kind: "printer",
+      };
+      setDetected((d) => [item, ...d.filter((x) => x.name !== name)]);
+      toast.success(`Détecté : ${name}`);
+    } catch {
+      toast.error("Aucun périphérique sélectionné");
+    }
+  };
+
+  const detectNetwork = async () => {
+    setScanning(true);
+    const base = networkBase.replace(/\.$/, "");
+    const found: DetectedDevice[] = [];
+    const ports = [631, 9100, 80];
+    const tasks: Promise<void>[] = [];
+    for (let i = 1; i <= 254; i++) {
+      const host = `${base}.${i}`;
+      for (const port of ports) {
+        tasks.push(
+          (async () => {
+            try {
+              const ctrl = new AbortController();
+              const t = setTimeout(() => ctrl.abort(), 600);
+              await fetch(`http://${host}:${port}/`, { mode: "no-cors", signal: ctrl.signal });
+              clearTimeout(t);
+              found.push({
+                name: `Imprimante réseau ${host}`,
+                source: "Réseau",
+                details: `port ${port}`,
+                kind: "printer",
+                folder: `\\\\${host}\\scans`,
+              });
+            } catch {
+              /* unreachable */
+            }
+          })(),
+        );
+      }
+    }
+    await Promise.allSettled(tasks);
+    setScanning(false);
+    if (found.length === 0) {
+      toast.error("Aucun hôte joignable. Vérifiez le sous-réseau.");
+    } else {
+      setDetected((d) => [...found, ...d]);
+      toast.success(`${found.length} hôte(s) détecté(s)`);
+    }
+  };
+
+  const fillFromDetected = (d: DetectedDevice) => {
+    setForm((f) => ({
+      ...f,
+      name: d.name,
+      kind: d.kind,
+      folder: d.folder ?? f.folder,
+      notes: `${d.source} – ${d.details}`,
+    }));
+    toast.info("Formulaire pré-rempli");
+  };
+
 
   return (
     <div className="space-y-6">
@@ -287,6 +391,59 @@ export default function PrinterManager() {
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Auto-detection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radar className="h-5 w-5" /> Détection automatique
+          </CardTitle>
+          <CardDescription>
+            Recherchez les imprimantes/scanners connectés via USB, Bluetooth ou le réseau local. Le navigateur affichera une boîte de dialogue système pour autoriser l'accès.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={detectUsb} disabled={!hasUsb}>
+              <Usb className="mr-2 h-4 w-4" /> Détecter via USB
+            </Button>
+            <Button variant="outline" onClick={detectBluetooth} disabled={!hasBluetooth}>
+              <Bluetooth className="mr-2 h-4 w-4" /> Détecter via Bluetooth
+            </Button>
+            <Button variant="outline" onClick={detectNetwork} disabled={scanning}>
+              <Wifi className="mr-2 h-4 w-4" /> {scanning ? "Analyse…" : "Scan réseau (IPP)"}
+            </Button>
+            {networkBase && (
+              <Input
+                className="w-48"
+                value={networkBase}
+                onChange={(e) => setNetworkBase(e.target.value)}
+                placeholder="192.168.1"
+              />
+            )}
+          </div>
+          {!hasUsb && !hasBluetooth && (
+            <p className="text-xs text-muted-foreground">
+              WebUSB et Web Bluetooth ne sont disponibles que dans Chrome, Edge et Opera (hors aperçu/iframe).
+            </p>
+          )}
+          {detected.length > 0 && (
+            <ul className="divide-y rounded-md border">
+              {detected.map((d, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{d.name}</p>
+                    <p className="text-xs text-muted-foreground">{d.source} · {d.details}</p>
+                  </div>
+                  <Button size="sm" onClick={() => fillFromDetected(d)}>
+                    Pré-remplir
+                  </Button>
                 </li>
               ))}
             </ul>
