@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { User, KeyRound, Mail, ShieldCheck, Palette, Bell } from "lucide-react";
+import { User, KeyRound, Mail, ShieldCheck, Palette, Bell, Printer } from "lucide-react";
+import PrinterManager from "@/components/PrinterManager";
 
 export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
@@ -154,13 +155,14 @@ function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
           <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" />Profil</TabsTrigger>
           <TabsTrigger value="password" className="gap-1"><KeyRound className="h-4 w-4" />Mot de passe</TabsTrigger>
           <TabsTrigger value="email" className="gap-1"><Mail className="h-4 w-4" />E-mail</TabsTrigger>
           <TabsTrigger value="security" className="gap-1"><ShieldCheck className="h-4 w-4" />Sécurité</TabsTrigger>
           <TabsTrigger value="display" className="gap-1"><Palette className="h-4 w-4" />Affichage</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1"><Bell className="h-4 w-4" />Notifications</TabsTrigger>
+          <TabsTrigger value="printers" className="gap-1"><Printer className="h-4 w-4" />Imprimantes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -375,6 +377,10 @@ function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="printers">
+          <PrinterManager />
         </TabsContent>
       </Tabs>
     </div>
