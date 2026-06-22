@@ -38,11 +38,32 @@ function ScannerPage() {
   );
   const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
   const seenRef = useRef<Set<string>>(new Set());
+  const filesInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
   const [folderName, setFolderName] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [pending, setPending] = useState<PendingScan[]>([]);
   const [active, setActive] = useState<PendingScan | null>(null);
   const [classifyOpen, setClassifyOpen] = useState<"incoming" | "outgoing" | null>(null);
+
+  const importPlainFile = useCallback((file: File) => {
+    const key = `${file.name}::${file.lastModified}::${file.size}`;
+    if (seenRef.current.has(key)) return false;
+    if (!ACCEPTED_EXT.test(file.name)) return false;
+    seenRef.current.add(key);
+    const isImage = file.type.startsWith("image/");
+    const url = URL.createObjectURL(file);
+    setPending((prev) => [{ key, file, url, rotation: 0, isImage }, ...prev]);
+    return true;
+  }, []);
+
+  const onFilesPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    let count = 0;
+    files.forEach((f) => { if (importPlainFile(f)) count++; });
+    if (count > 0) toast.success(`${count} ${t("filesImported")}`);
+    e.target.value = "";
+  };
 
   const importFile = useCallback(async (handle: FileSystemFileHandle) => {
     try {
@@ -264,12 +285,20 @@ function ScannerPage() {
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">{t("folderHint")}</p>
           {!supported && (
-            <p className="text-sm text-destructive">{t("folderUnsupported")}</p>
+            <p className="text-sm text-muted-foreground">{t("folderUnsupported")}</p>
           )}
           <div className="flex flex-wrap gap-2">
             <Button onClick={connect} disabled={!supported} variant={folderName ? "outline" : "default"}>
               {folderName ? <FolderOpen className="mr-2 h-4 w-4" /> : <Folder className="mr-2 h-4 w-4" />}
               {folderName ? t("reconnectFolder") : t("connectFolder")}
+            </Button>
+            <Button onClick={() => filesInputRef.current?.click()} variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              {t("importFiles")}
+            </Button>
+            <Button onClick={() => folderInputRef.current?.click()} variant="outline">
+              <Folder className="mr-2 h-4 w-4" />
+              {t("importFolder")}
             </Button>
             {folderName && (
               <Button onClick={scanFolder} variant="outline" disabled={scanning}>
@@ -284,6 +313,24 @@ function ScannerPage() {
               </span>
             )}
           </div>
+          <input
+            ref={filesInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.bmp,.webp"
+            className="hidden"
+            onChange={onFilesPicked}
+          />
+          <input
+            ref={folderInputRef}
+            type="file"
+            multiple
+            // @ts-expect-error non-standard but widely supported
+            webkitdirectory=""
+            directory=""
+            className="hidden"
+            onChange={onFilesPicked}
+          />
         </CardContent>
       </Card>
 
