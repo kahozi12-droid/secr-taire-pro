@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle, Radar, Usb, Bluetooth, Wifi } from "lucide-react";
+import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle, Radar, Usb, Bluetooth, Wifi, Server, AlertTriangle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type DeviceKind = "printer" | "scanner" | "multifunction";
@@ -266,6 +266,44 @@ export default function PrinterManager() {
     }
   };
 
+  const detectLocalAgent = async () => {
+    const endpoints = [
+      "http://localhost:7777/printers",
+      "http://127.0.0.1:7777/printers",
+    ];
+    for (const url of endpoints) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 1500);
+        const res = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!res.ok) continue;
+        const list = (await res.json()) as Array<{
+          name: string;
+          uri?: string;
+          location?: string;
+          type?: DeviceKind;
+        }>;
+        const found: DetectedDevice[] = list.map((p) => ({
+          name: p.name,
+          source: "Réseau",
+          details: p.uri || p.location || "agent local",
+          kind: p.type ?? "printer",
+        }));
+        if (found.length) {
+          setDetected((d) => [...found, ...d]);
+          toast.success(`${found.length} imprimante(s) trouvée(s) via l'agent local`);
+          return;
+        }
+        toast.info("Agent local connecté, mais aucune imprimante installée");
+        return;
+      } catch {
+        /* try next */
+      }
+    }
+    toast.error("Agent local introuvable sur localhost:7777");
+  };
+
   const fillFromDetected = (d: DetectedDevice) => {
     setForm((f) => ({
       ...f,
@@ -276,6 +314,11 @@ export default function PrinterManager() {
     }));
     toast.info("Formulaire pré-rempli");
   };
+
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+  const mixedContentBlocked = isHttps; // HTTPS → http://LAN is always blocked
+  const showEnvWarning = caps.inIframe || mixedContentBlocked;
+
 
 
   return (
