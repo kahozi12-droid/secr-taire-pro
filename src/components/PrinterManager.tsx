@@ -187,6 +187,97 @@ export default function PrinterManager() {
     window.open(window.location.href, "_blank", "noopener,noreferrer");
   };
 
+  const detectUsb = async () => {
+    try {
+      // @ts-expect-error WebUSB
+      const dev = await navigator.usb.requestDevice({ filters: [{ classCode: 7 }] });
+      const name = dev.productName || `USB ${dev.vendorId}:${dev.productId}`;
+      const item: DetectedDevice = {
+        name,
+        source: "USB",
+        details: `VID ${dev.vendorId?.toString(16)} / PID ${dev.productId?.toString(16)}`,
+        kind: "printer",
+      };
+      setDetected((d) => [item, ...d.filter((x) => x.name !== name)]);
+      toast.success(`Détecté : ${name}`);
+    } catch {
+      toast.error("Aucun périphérique sélectionné");
+    }
+  };
+
+  const detectBluetooth = async () => {
+    try {
+      // @ts-expect-error WebBluetooth
+      const dev = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"],
+      });
+      const name = dev.name || "Périphérique Bluetooth";
+      const item: DetectedDevice = {
+        name,
+        source: "Bluetooth",
+        details: dev.id || "BT",
+        kind: "printer",
+      };
+      setDetected((d) => [item, ...d.filter((x) => x.name !== name)]);
+      toast.success(`Détecté : ${name}`);
+    } catch {
+      toast.error("Aucun périphérique sélectionné");
+    }
+  };
+
+  const detectNetwork = async () => {
+    setScanning(true);
+    const base = networkBase.replace(/\.$/, "");
+    const found: DetectedDevice[] = [];
+    const ports = [631, 9100, 80];
+    const tasks: Promise<void>[] = [];
+    for (let i = 1; i <= 254; i++) {
+      const host = `${base}.${i}`;
+      for (const port of ports) {
+        tasks.push(
+          (async () => {
+            try {
+              const ctrl = new AbortController();
+              const t = setTimeout(() => ctrl.abort(), 600);
+              await fetch(`http://${host}:${port}/`, { mode: "no-cors", signal: ctrl.signal });
+              clearTimeout(t);
+              found.push({
+                name: `Imprimante réseau ${host}`,
+                source: "Réseau",
+                details: `port ${port}`,
+                kind: "printer",
+                folder: `\\\\${host}\\scans`,
+              });
+            } catch {
+              /* unreachable */
+            }
+          })(),
+        );
+      }
+    }
+    await Promise.allSettled(tasks);
+    setScanning(false);
+    if (found.length === 0) {
+      toast.error("Aucun hôte joignable. Vérifiez le sous-réseau.");
+    } else {
+      setDetected((d) => [...found, ...d]);
+      toast.success(`${found.length} hôte(s) détecté(s)`);
+    }
+  };
+
+  const fillFromDetected = (d: DetectedDevice) => {
+    setForm((f) => ({
+      ...f,
+      name: d.name,
+      kind: d.kind,
+      folder: d.folder ?? f.folder,
+      notes: `${d.source} – ${d.details}`,
+    }));
+    toast.info("Formulaire pré-rempli");
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Browser capabilities */}
