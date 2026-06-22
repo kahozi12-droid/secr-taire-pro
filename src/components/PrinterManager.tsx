@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle } from "lucide-react";
+import { Printer, Plus, Trash2, Settings2, Folder, CheckCircle2, XCircle, Radar, Usb, Bluetooth, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 type DeviceKind = "printer" | "scanner" | "multifunction";
@@ -287,6 +287,59 @@ export default function PrinterManager() {
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Auto-detection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radar className="h-5 w-5" /> Détection automatique
+          </CardTitle>
+          <CardDescription>
+            Recherchez les imprimantes/scanners connectés via USB, Bluetooth ou le réseau local. Le navigateur affichera une boîte de dialogue système pour autoriser l'accès.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={detectUsb} disabled={!hasUsb}>
+              <Usb className="mr-2 h-4 w-4" /> Détecter via USB
+            </Button>
+            <Button variant="outline" onClick={detectBluetooth} disabled={!hasBluetooth}>
+              <Bluetooth className="mr-2 h-4 w-4" /> Détecter via Bluetooth
+            </Button>
+            <Button variant="outline" onClick={detectNetwork} disabled={scanning}>
+              <Wifi className="mr-2 h-4 w-4" /> {scanning ? "Analyse…" : "Scan réseau (IPP)"}
+            </Button>
+            {networkBase && (
+              <Input
+                className="w-48"
+                value={networkBase}
+                onChange={(e) => setNetworkBase(e.target.value)}
+                placeholder="192.168.1"
+              />
+            )}
+          </div>
+          {!hasUsb && !hasBluetooth && (
+            <p className="text-xs text-muted-foreground">
+              WebUSB et Web Bluetooth ne sont disponibles que dans Chrome, Edge et Opera (hors aperçu/iframe).
+            </p>
+          )}
+          {detected.length > 0 && (
+            <ul className="divide-y rounded-md border">
+              {detected.map((d, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{d.name}</p>
+                    <p className="text-xs text-muted-foreground">{d.source} · {d.details}</p>
+                  </div>
+                  <Button size="sm" onClick={() => fillFromDetected(d)}>
+                    Pré-remplir
+                  </Button>
                 </li>
               ))}
             </ul>
