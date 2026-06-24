@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ReactNode } from "react";
+import bgEmblem from "@/assets/bg-emblem.jpeg";
 
 interface NavItem {
   to: string;
@@ -152,10 +153,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <main
-          className="flex-1 overflow-auto p-4 md:p-6"
+          className="relative flex-1 overflow-auto p-4 md:p-6"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
         >
-          {children}
+          <div
+            aria-hidden
+            className="pointer-events-none fixed inset-0 z-0 bg-center bg-no-repeat"
+            style={{
+              backgroundImage: `url(${bgEmblem})`,
+              backgroundSize: "min(60vw, 600px)",
+              opacity: 0.07,
+            }}
+          />
+          <div className="relative z-10">{children}</div>
         </main>
 
         {/* Mobile bottom nav (app-like) */}
