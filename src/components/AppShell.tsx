@@ -12,6 +12,7 @@ import {
   Printer,
   Search,
   Settings as SettingsIcon,
+  Sparkles,
 
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
@@ -36,6 +37,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard, directorAllowed: true, secretaryAllowed: true },
   { to: "/scanner", labelKey: "scanner", icon: Printer, directorAllowed: true, secretaryAllowed: true },
+  { to: "/assistant", labelKey: "assistant", icon: Sparkles, directorAllowed: true, secretaryAllowed: true },
   { to: "/search", labelKey: "searchNav", icon: Search, directorAllowed: true, secretaryAllowed: true },
   { to: "/incoming", labelKey: "incoming", icon: Inbox, directorAllowed: true, secretaryAllowed: true },
   { to: "/outgoing", labelKey: "outgoing", icon: Send, directorAllowed: true, secretaryAllowed: true },
