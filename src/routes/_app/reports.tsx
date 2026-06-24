@@ -896,6 +896,7 @@ function DailyReport() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <style>{`
