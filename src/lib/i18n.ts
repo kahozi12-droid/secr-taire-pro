@@ -126,6 +126,7 @@ export const translations = {
     noFile: "Aucun fichier",
     // Scanner
     scanner: "Scanner",
+    assistant: "Assistant IA",
     assignedPrinter: "Imprimante assignée",
     connectFolder: "Connecter le dossier du scanner",
     folderConnected: "Dossier connecté",
@@ -304,6 +305,7 @@ export const translations = {
     notTreated: "Pending",
     noFile: "No file",
     scanner: "Scanner",
+    assistant: "AI Assistant",
     assignedPrinter: "Assigned printer",
     connectFolder: "Connect scanner folder",
     folderConnected: "Folder connected",
