@@ -5,7 +5,7 @@ export type Lang = "fr" | "en";
 
 export const translations = {
   fr: {
-    appName: "Secrétariat Direction",
+    appName: "DigiCab - SAE/LBA",
     appTagline: "Gestion du courrier et des documents",
     // Auth
     signIn: "Se connecter",
@@ -20,10 +20,10 @@ export const translations = {
     accessSecretariat: "Accédez à votre espace de travail sécurisé",
     // Nav
     dashboard: "Tableau de bord",
-    incoming: "Courrier arrivé",
-    outgoing: "Courrier départ",
+    incoming: "Courrier Entrants",
+    outgoing: "Courrier Sortants",
     legalLibrary: "Bibliothèque juridique",
-    activity: "Activités",
+    activity: "Activités & Statistiques",
     reports: "Rapports",
     settings: "Paramètres",
     // Dashboard
@@ -125,7 +125,7 @@ export const translations = {
     notTreated: "Non traité",
     noFile: "Aucun fichier",
     // Scanner
-    scanner: "Scanner",
+    scanner: "Imprimante/Scanner",
     assistant: "Assistant IA",
     assignedPrinter: "Imprimante assignée",
     connectFolder: "Connecter le dossier du scanner",
@@ -193,7 +193,7 @@ export const translations = {
     searchAnyStatus: "Tous statuts",
   },
   en: {
-    appName: "Director's Secretariat",
+    appName: "DigiCab - SAE/LBA",
     appTagline: "Mail & document management",
     signIn: "Sign in",
     signUp: "Create account",
@@ -209,7 +209,7 @@ export const translations = {
     incoming: "Incoming Mail",
     outgoing: "Outgoing Mail",
     legalLibrary: "Legal Library",
-    activity: "Activity",
+    activity: "Activity & Statistics",
     reports: "Reports",
     settings: "Settings",
     totalIncoming: "Total incoming",
@@ -304,7 +304,7 @@ export const translations = {
     treated: "Processed",
     notTreated: "Pending",
     noFile: "No file",
-    scanner: "Scanner",
+    scanner: "Printer/Scanner",
     assistant: "AI Assistant",
     assignedPrinter: "Assigned printer",
     connectFolder: "Connect scanner folder",
