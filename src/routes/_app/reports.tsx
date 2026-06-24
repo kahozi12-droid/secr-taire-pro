@@ -740,11 +740,42 @@ function DailyReport() {
                   </tr>
                 );
               }
+              const fixedLabel = i < 5 ? FIXED_TASK_LABELS[i] : null;
+              const fixedCount = fixedLabel ? parseFixedCount(row.detail) : 0;
               return (
                 <tr key={row.id}>
                   <td className="border border-black p-1 text-center font-semibold">{i + 1}</td>
                   <td className="border border-black p-0">
-                    {isSecretary ? (
+                    {fixedLabel ? (
+                      <div className="flex items-center gap-1 px-1 py-1">
+                        <span className="flex-1">{fixedLabel}</span>
+                        <span>(</span>
+                        {isSecretary ? (
+                          <Select
+                            value={String(fixedCount)}
+                            onValueChange={(v) => {
+                              const next = { ...row, detail: formatFixedDetail(fixedLabel, parseInt(v, 10)), saved: false };
+                              updateTask(row.id, { detail: next.detail, saved: false });
+                              void saveTask(next);
+                            }}
+                          >
+                            <SelectTrigger className="h-6 w-16 px-1 py-0 text-[11px] print:hidden">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-64">
+                              {Array.from({ length: 101 }, (_, n) => (
+                                <SelectItem key={n} value={String(n)}>
+                                  {n}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <span className="hidden print:inline">{fixedCount}</span>
+                        <span className="print:hidden sr-only">{fixedCount}</span>
+                        <span>)</span>
+                      </div>
+                    ) : isSecretary ? (
                       <input
                         className="w-full bg-transparent px-1 py-1 outline-none print:p-1"
                         value={row.detail}
