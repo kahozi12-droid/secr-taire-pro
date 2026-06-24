@@ -879,6 +879,19 @@ function DailyReport() {
                       <span className="block px-1 py-1">{row.observation ?? ""}</span>
                     )}
                   </td>
+                  {extraCols.map((c) => (
+                    <td key={c.key} className="border border-black p-0">
+                      {isSecretary ? (
+                        <input
+                          className="w-full bg-transparent px-1 py-1 outline-none print:p-1"
+                          value={extraVals[row.id]?.[c.key] ?? ""}
+                          onChange={(e) => setCell(row.id, c.key, e.target.value)}
+                        />
+                      ) : (
+                        <span className="block px-1 py-1">{extraVals[row.id]?.[c.key] ?? ""}</span>
+                      )}
+                    </td>
+                  ))}
                   {isSecretary && (
                     <td className="border border-black p-1 text-center print:hidden">
                       <button
