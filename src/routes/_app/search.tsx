@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search as SearchIcon, FileText, BookOpen } from "lucide-react";
+import { Search as SearchIcon, FileText, BookOpen, Users, Clock, CheckCircle2, Archive, TrendingUp, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_app/search")({
   component: SearchPage,
