@@ -12,6 +12,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const FIXED_TASK_LABELS: string[] = [
+  "Carnets d'Autorisation de Sortie des Substances Minérales Intersites « A.S.S.M.I »",
+  "Bon d'Achat Comptoir « B.A.C »",
+  "Bon d'Achat Négociant « B.A.N »",
+  "Carnets de Procès-Verbal de Chargement « P.V.C »",
+  "Demande de paiement",
+];
+const COUNT_RE = /\s*\((\d+)\)\s*$/;
+function parseFixedCount(detail: string): number {
+  const m = detail.match(COUNT_RE);
+  return m ? Math.min(100, Math.max(0, parseInt(m[1], 10))) : 0;
+}
+function formatFixedDetail(label: string, count: number): string {
+  return `${label} (${count})`;
+}
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import drcFlag from "@/assets/drc-flag.jpg";
@@ -416,7 +433,23 @@ function DailyReport() {
       ]);
       setIncoming((inc ?? []) as IncomingDoc[]);
       setOutgoing((out ?? []) as OutgoingDoc[]);
-      setTasks(((tk ?? []) as Omit<OtherTask, "saved">[]).map((r) => ({ ...r, saved: true })));
+      const dbRows = ((tk ?? []) as Omit<OtherTask, "saved">[]).map((r) => ({ ...r, saved: true }));
+      // Ensure the 5 fixed rows exist at positions 0..4
+      const fixed: OtherTask[] = FIXED_TASK_LABELS.map((label, i) => {
+        const existing = dbRows.find(
+          (r) => r.position === i && r.detail.replace(COUNT_RE, "").trim() === label,
+        );
+        if (existing) return existing;
+        return {
+          id: crypto.randomUUID(),
+          detail: formatFixedDetail(label, 0),
+          observation: "",
+          position: i,
+          saved: false,
+        };
+      });
+      const extras = dbRows.filter((r) => !fixed.some((f) => f.id === r.id));
+      setTasks([...fixed, ...extras]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveError"));
     } finally {
@@ -707,11 +740,42 @@ function DailyReport() {
                   </tr>
                 );
               }
+              const fixedLabel = i < 5 ? FIXED_TASK_LABELS[i] : null;
+              const fixedCount = fixedLabel ? parseFixedCount(row.detail) : 0;
               return (
                 <tr key={row.id}>
                   <td className="border border-black p-1 text-center font-semibold">{i + 1}</td>
                   <td className="border border-black p-0">
-                    {isSecretary ? (
+                    {fixedLabel ? (
+                      <div className="flex items-center gap-1 px-1 py-1">
+                        <span className="flex-1">{fixedLabel}</span>
+                        <span>(</span>
+                        {isSecretary ? (
+                          <Select
+                            value={String(fixedCount)}
+                            onValueChange={(v) => {
+                              const next = { ...row, detail: formatFixedDetail(fixedLabel, parseInt(v, 10)), saved: false };
+                              updateTask(row.id, { detail: next.detail, saved: false });
+                              void saveTask(next);
+                            }}
+                          >
+                            <SelectTrigger className="h-6 w-16 px-1 py-0 text-[11px] print:hidden">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-64">
+                              {Array.from({ length: 101 }, (_, n) => (
+                                <SelectItem key={n} value={String(n)}>
+                                  {n}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        {!isSecretary && <span>{fixedCount}</span>}
+                        <span className="hidden print:inline">{fixedCount}</span>
+                        <span>)</span>
+                      </div>
+                    ) : isSecretary ? (
                       <input
                         className="w-full bg-transparent px-1 py-1 outline-none print:p-1"
                         value={row.detail}
