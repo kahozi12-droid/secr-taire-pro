@@ -231,6 +231,129 @@ function SearchPage() {
         )}
       </Card>
 
+      {/* Smart entity insights */}
+      {q.trim().length >= 2 && docs.length > 0 && (() => {
+        const ql = q.trim().toLowerCase();
+        const byEntity = new Map<string, {
+          name: string;
+          role: "sender" | "recipient" | "mixed";
+          total: number;
+          incoming: number;
+          outgoing: number;
+          pending: number;
+          processed: number;
+          archived: number;
+          lastDate: string;
+          firstDate: string;
+        }>();
+        for (const d of docs) {
+          const candidates: Array<{ name: string; role: "sender" | "recipient" }> = [];
+          if (d.sender && d.sender.toLowerCase().includes(ql)) candidates.push({ name: d.sender, role: "sender" });
+          if (d.recipient && d.recipient.toLowerCase().includes(ql)) candidates.push({ name: d.recipient, role: "recipient" });
+          for (const c of candidates) {
+            const key = c.name.trim();
+            const cur = byEntity.get(key) ?? {
+              name: key, role: c.role, total: 0, incoming: 0, outgoing: 0,
+              pending: 0, processed: 0, archived: 0,
+              lastDate: d.document_date, firstDate: d.document_date,
+            };
+            if (cur.role !== c.role) cur.role = "mixed";
+            cur.total++;
+            if (d.type === "incoming") cur.incoming++; else cur.outgoing++;
+            if (d.status === "pending") cur.pending++;
+            else if (d.status === "processed") cur.processed++;
+            else if (d.status === "archived") cur.archived++;
+            if (d.document_date > cur.lastDate) cur.lastDate = d.document_date;
+            if (d.document_date < cur.firstDate) cur.firstDate = d.document_date;
+            byEntity.set(key, cur);
+          }
+        }
+        const entities = Array.from(byEntity.values()).sort((a, b) => b.total - a.total).slice(0, 3);
+        if (entities.length === 0) return null;
+
+        const totalPending = entities.reduce((s, e) => s + e.pending, 0);
+        const totalDocs = entities.reduce((s, e) => s + e.total, 0);
+
+        return (
+          <Card className="space-y-4 border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold">Aperçu intelligent</h2>
+              <Badge variant="secondary" className="text-[10px]">{entities.length} entité{entities.length > 1 ? "s" : ""}</Badge>
+              {totalPending > 0 && (
+                <Badge variant="destructive" className="ml-auto gap-1 text-[10px]">
+                  <AlertCircle className="h-3 w-3" />
+                  {totalPending} en attente
+                </Badge>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {entities.map((e) => (
+                <div key={e.name} className="rounded-lg border bg-background p-3">
+                  <div className="flex items-start gap-2">
+                    <Users className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold" title={e.name}>
+                        {highlight(e.name, q)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {e.role === "sender" ? "Expéditeur" : e.role === "recipient" ? "Destinataire" : "Expéditeur & Destinataire"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-1.5 text-[11px]">
+                    <div className="flex items-center justify-between rounded bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-semibold">{e.total}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Entrants</span>
+                      <span className="font-semibold">{e.incoming}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Sortants</span>
+                      <span className="font-semibold">{e.outgoing}</span>
+                    </div>
+                    <div className={`flex items-center justify-between rounded px-2 py-1 ${e.pending > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/40"}`}>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />En attente</span>
+                      <span className="font-semibold">{e.pending}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded bg-muted/40 px-2 py-1">
+                      <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Traités</span>
+                      <span className="font-semibold">{e.processed}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded bg-muted/40 px-2 py-1">
+                      <span className="flex items-center gap-1"><Archive className="h-3 w-3" />Archivés</span>
+                      <span className="font-semibold">{e.archived}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 text-[11px] text-muted-foreground">
+                    Dernier : <span className="font-medium text-foreground">{e.lastDate}</span>
+                    {e.firstDate !== e.lastDate && <> · Premier : {e.firstDate}</>}
+                  </div>
+
+                  {e.pending > 0 && (
+                    <Link
+                      to="/pending"
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                    >
+                      Traiter {e.pending} en attente →
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              Basé sur les {totalDocs} document{totalDocs > 1 ? "s" : ""} correspondants ci-dessous.
+            </p>
+          </Card>
+        );
+      })()}
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">
