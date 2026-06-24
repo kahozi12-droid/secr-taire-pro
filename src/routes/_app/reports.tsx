@@ -408,6 +408,54 @@ function DailyReport() {
   const [outgoing, setOutgoing] = useState<OutgoingDoc[]>([]);
   const [tasks, setTasks] = useState<OtherTask[]>([]);
 
+  // Dynamic extra columns + values (per date) persisted in localStorage
+  type ExtraCol = { key: string; label: string };
+  const colsKey = `report.otherCols.${date}`;
+  const valsKey = `report.otherVals.${date}`;
+  const [extraCols, setExtraCols] = useState<ExtraCol[]>([]);
+  const [extraVals, setExtraVals] = useState<Record<string, Record<string, string>>>({});
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      setExtraCols(JSON.parse(localStorage.getItem(colsKey) ?? "[]"));
+      setExtraVals(JSON.parse(localStorage.getItem(valsKey) ?? "{}"));
+    } catch {
+      setExtraCols([]);
+      setExtraVals({});
+    }
+  }, [colsKey, valsKey]);
+  const persistCols = (next: ExtraCol[]) => {
+    setExtraCols(next);
+    try { localStorage.setItem(colsKey, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const persistVals = (next: Record<string, Record<string, string>>) => {
+    setExtraVals(next);
+    try { localStorage.setItem(valsKey, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const addColumn = () => {
+    const key = `c_${Date.now().toString(36)}`;
+    persistCols([...extraCols, { key, label: "Colonne" }]);
+  };
+  const renameColumn = (key: string, label: string) => {
+    persistCols(extraCols.map((c) => (c.key === key ? { ...c, label } : c)));
+  };
+  const removeColumn = (key: string) => {
+    if (!confirm(t("confirmDelete"))) return;
+    persistCols(extraCols.filter((c) => c.key !== key));
+    const nv = { ...extraVals };
+    for (const rid of Object.keys(nv)) {
+      if (nv[rid] && key in nv[rid]) {
+        const { [key]: _, ...rest } = nv[rid];
+        nv[rid] = rest;
+      }
+    }
+    persistVals(nv);
+  };
+  const setCell = (rowId: string, colKey: string, value: string) => {
+    const nv = { ...extraVals, [rowId]: { ...(extraVals[rowId] ?? {}), [colKey]: value } };
+    persistVals(nv);
+  };
+
   const load = useCallback(async () => {
     setBusy(true);
     try {
