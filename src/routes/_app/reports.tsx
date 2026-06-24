@@ -408,6 +408,54 @@ function DailyReport() {
   const [outgoing, setOutgoing] = useState<OutgoingDoc[]>([]);
   const [tasks, setTasks] = useState<OtherTask[]>([]);
 
+  // Dynamic extra columns + values (per date) persisted in localStorage
+  type ExtraCol = { key: string; label: string };
+  const colsKey = `report.otherCols.${date}`;
+  const valsKey = `report.otherVals.${date}`;
+  const [extraCols, setExtraCols] = useState<ExtraCol[]>([]);
+  const [extraVals, setExtraVals] = useState<Record<string, Record<string, string>>>({});
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      setExtraCols(JSON.parse(localStorage.getItem(colsKey) ?? "[]"));
+      setExtraVals(JSON.parse(localStorage.getItem(valsKey) ?? "{}"));
+    } catch {
+      setExtraCols([]);
+      setExtraVals({});
+    }
+  }, [colsKey, valsKey]);
+  const persistCols = (next: ExtraCol[]) => {
+    setExtraCols(next);
+    try { localStorage.setItem(colsKey, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const persistVals = (next: Record<string, Record<string, string>>) => {
+    setExtraVals(next);
+    try { localStorage.setItem(valsKey, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const addColumn = () => {
+    const key = `c_${Date.now().toString(36)}`;
+    persistCols([...extraCols, { key, label: "Colonne" }]);
+  };
+  const renameColumn = (key: string, label: string) => {
+    persistCols(extraCols.map((c) => (c.key === key ? { ...c, label } : c)));
+  };
+  const removeColumn = (key: string) => {
+    if (!confirm(t("confirmDelete"))) return;
+    persistCols(extraCols.filter((c) => c.key !== key));
+    const nv = { ...extraVals };
+    for (const rid of Object.keys(nv)) {
+      if (nv[rid] && key in nv[rid]) {
+        const { [key]: _, ...rest } = nv[rid];
+        nv[rid] = rest;
+      }
+    }
+    persistVals(nv);
+  };
+  const setCell = (rowId: string, colKey: string, value: string) => {
+    const nv = { ...extraVals, [rowId]: { ...(extraVals[rowId] ?? {}), [colKey]: value } };
+    persistVals(nv);
+  };
+
   const load = useCallback(async () => {
     setBusy(true);
     try {
@@ -712,18 +760,48 @@ function DailyReport() {
         <div className="mt-4 flex items-center justify-between">
           <h3 className="text-sm font-bold underline">3. {t("otherTreatments")}</h3>
           {isSecretary && (
-            <Button size="sm" variant="outline" onClick={addTaskRow} className="print:hidden">
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              {t("addRow")}
-            </Button>
+            <div className="flex gap-2 print:hidden">
+              <Button size="sm" variant="outline" onClick={addColumn}>
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Colonne
+              </Button>
+              <Button size="sm" variant="outline" onClick={addTaskRow}>
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                {t("addRow")}
+              </Button>
+            </div>
           )}
         </div>
-        <table className="mt-2 w-full border-collapse border border-black text-[11px]">
+        <div className="mt-2 overflow-x-auto">
+        <table className="w-full border-collapse border border-black text-[11px]">
           <thead className="bg-gray-200">
             <tr>
               <th className="w-10 border border-black p-1">N°</th>
               <th className="border border-black p-1">{t("detail")}</th>
               <th className="w-40 border border-black p-1">{t("observation")}</th>
+              {extraCols.map((c) => (
+                <th key={c.key} className="border border-black p-1">
+                  {isSecretary ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        className="w-full min-w-[80px] bg-transparent text-center font-semibold outline-none"
+                        value={c.label}
+                        onChange={(e) => renameColumn(c.key, e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeColumn(c.key)}
+                        className="text-destructive hover:opacity-70 print:hidden"
+                        aria-label="delete column"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span>{c.label}</span>
+                  )}
+                </th>
+              ))}
               {isSecretary && <th className="w-16 border border-black p-1 print:hidden">·</th>}
             </tr>
           </thead>
@@ -736,6 +814,9 @@ function DailyReport() {
                     <td className="border border-black p-1 text-center font-semibold">{i + 1}</td>
                     <td className="border border-black p-1">&nbsp;</td>
                     <td className="border border-black p-1">&nbsp;</td>
+                    {extraCols.map((c) => (
+                      <td key={c.key} className="border border-black p-1">&nbsp;</td>
+                    ))}
                     {isSecretary && <td className="border border-black p-1 print:hidden">&nbsp;</td>}
                   </tr>
                 );
@@ -798,6 +879,19 @@ function DailyReport() {
                       <span className="block px-1 py-1">{row.observation ?? ""}</span>
                     )}
                   </td>
+                  {extraCols.map((c) => (
+                    <td key={c.key} className="border border-black p-0">
+                      {isSecretary ? (
+                        <input
+                          className="w-full bg-transparent px-1 py-1 outline-none print:p-1"
+                          value={extraVals[row.id]?.[c.key] ?? ""}
+                          onChange={(e) => setCell(row.id, c.key, e.target.value)}
+                        />
+                      ) : (
+                        <span className="block px-1 py-1">{extraVals[row.id]?.[c.key] ?? ""}</span>
+                      )}
+                    </td>
+                  ))}
                   {isSecretary && (
                     <td className="border border-black p-1 text-center print:hidden">
                       <button
@@ -815,6 +909,7 @@ function DailyReport() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <style>{`
