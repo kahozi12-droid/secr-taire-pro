@@ -771,8 +771,8 @@ function DailyReport() {
                             </SelectContent>
                           </Select>
                         ) : null}
+                        {!isSecretary && <span>{fixedCount}</span>}
                         <span className="hidden print:inline">{fixedCount}</span>
-                        <span className="print:hidden sr-only">{fixedCount}</span>
                         <span>)</span>
                       </div>
                     ) : isSecretary ? (
