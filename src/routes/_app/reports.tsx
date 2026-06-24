@@ -12,6 +12,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const FIXED_TASK_LABELS: string[] = [
+  "Carnets d'Autorisation de Sortie des Substances Minérales Intersites « A.S.S.M.I »",
+  "Bon d'Achat Comptoir « B.A.C »",
+  "Bon d'Achat Négociant « B.A.N »",
+  "Carnets de Procès-Verbal de Chargement « P.V.C »",
+  "Demande de paiement",
+];
+const COUNT_RE = /\s*\((\d+)\)\s*$/;
+function parseFixedCount(detail: string): number {
+  const m = detail.match(COUNT_RE);
+  return m ? Math.min(100, Math.max(0, parseInt(m[1], 10))) : 0;
+}
+function formatFixedDetail(label: string, count: number): string {
+  return `${label} (${count})`;
+}
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import drcFlag from "@/assets/drc-flag.jpg";
