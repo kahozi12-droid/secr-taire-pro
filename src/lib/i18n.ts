@@ -6,7 +6,7 @@ export type Lang = "fr" | "en";
 export const translations = {
   fr: {
     appName: "DigiCab - SAE/LBA",
-    appTagline: "Gestion du courrier et des documents",
+    appTagline: "Gestion optimisée des courriers et flux administratifs",
     // Auth
     signIn: "Se connecter",
     signUp: "Créer un compte",
@@ -194,7 +194,7 @@ export const translations = {
   },
   en: {
     appName: "DigiCab - SAE/LBA",
-    appTagline: "Mail & document management",
+    appTagline: "Optimized management of mail and administrative workflows",
     signIn: "Sign in",
     signUp: "Create account",
     email: "Email address",
