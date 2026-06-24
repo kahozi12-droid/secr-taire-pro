@@ -433,7 +433,23 @@ function DailyReport() {
       ]);
       setIncoming((inc ?? []) as IncomingDoc[]);
       setOutgoing((out ?? []) as OutgoingDoc[]);
-      setTasks(((tk ?? []) as Omit<OtherTask, "saved">[]).map((r) => ({ ...r, saved: true })));
+      const dbRows = ((tk ?? []) as Omit<OtherTask, "saved">[]).map((r) => ({ ...r, saved: true }));
+      // Ensure the 5 fixed rows exist at positions 0..4
+      const fixed: OtherTask[] = FIXED_TASK_LABELS.map((label, i) => {
+        const existing = dbRows.find(
+          (r) => r.position === i && r.detail.replace(COUNT_RE, "").trim() === label,
+        );
+        if (existing) return existing;
+        return {
+          id: crypto.randomUUID(),
+          detail: formatFixedDetail(label, 0),
+          observation: "",
+          position: i,
+          saved: false,
+        };
+      });
+      const extras = dbRows.filter((r) => !fixed.some((f) => f.id === r.id));
+      setTasks([...fixed, ...extras]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveError"));
     } finally {
