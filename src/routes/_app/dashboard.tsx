@@ -69,32 +69,66 @@ function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recent, setRecent] = useState<Array<{ id: string; reference_code: string; title: string; type: string; category_sub: string; created_at: string }>>([]);
   const [activity, setActivity] = useState<Array<{ id: string; action: string; created_at: string; details: unknown }>>([]);
+  const [today, setToday] = useState<Date | null>(null);
+
+  const loadAll = async () => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const [inc, out, pen, proc, recentDocs, acts] = await Promise.all([
+      supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "incoming"),
+      supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "outgoing"),
+      supabase.from("documents").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("documents").select("*", { count: "exact", head: true }).eq("status", "processed").gte("updated_at", todayStr),
+      supabase.from("documents").select("id,reference_code,title,type,category_sub,created_at").order("created_at", { ascending: false }).limit(5),
+      supabase.from("activity_log").select("id,action,created_at,details").order("created_at", { ascending: false }).limit(8),
+    ]);
+    setStats({ incoming: inc.count ?? 0, outgoing: out.count ?? 0, pending: pen.count ?? 0, processedToday: proc.count ?? 0 });
+    setRecent(recentDocs.data ?? []);
+    setActivity(acts.data ?? []);
+    setToday(new Date());
+  };
 
   useEffect(() => {
-    (async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const [inc, out, pen, proc, recentDocs, acts] = await Promise.all([
-        supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "incoming"),
-        supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "outgoing"),
-        supabase.from("documents").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("documents").select("*", { count: "exact", head: true }).eq("status", "processed").gte("updated_at", today),
-        supabase.from("documents").select("id,reference_code,title,type,category_sub,created_at").order("created_at", { ascending: false }).limit(5),
-        supabase.from("activity_log").select("id,action,created_at,details").order("created_at", { ascending: false }).limit(8),
-      ]);
-      setStats({ incoming: inc.count ?? 0, outgoing: out.count ?? 0, pending: pen.count ?? 0, processedToday: proc.count ?? 0 });
-      setRecent(recentDocs.data ?? []);
-      setActivity(acts.data ?? []);
-    })();
+    loadAll();
+    const interval = setInterval(loadAll, 5 * 60 * 1000);
+    let lastDay = new Date().toDateString();
+    const dayCheck = setInterval(() => {
+      const now = new Date().toDateString();
+      if (now !== lastDay) {
+        lastDay = now;
+        loadAll();
+      }
+    }, 60 * 1000);
+    const onFocus = () => loadAll();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      clearInterval(dayCheck);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
+
+  const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
+  const todayLabel = today
+    ? today.toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+    : "";
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("dashboard")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("welcomeBack")}, {fullName} · {role === "director" ? t("roleDirector") : t("roleSecretary")}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("dashboard")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t("welcomeBack")}, {fullName} · {role === "director" ? t("roleDirector") : t("roleSecretary")}
+          </p>
+        </div>
+        {todayLabel && (
+          <div className="rounded-lg border border-border bg-card px-3 py-2 text-right">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{lang === "fr" ? "Aujourd'hui" : "Today"}</p>
+            <p className="text-sm font-semibold capitalize">{todayLabel}</p>
+          </div>
+        )}
       </div>
+
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Inbox} label={t("totalIncoming")} value={stats?.incoming ?? 0} accent="bg-[var(--cat-sae-bg)] text-[var(--cat-sae)]" to="/incoming" />
