@@ -115,10 +115,6 @@ function Dashboard() {
     };
   }, []);
 
-  const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
-  const todayLabel = today
-    ? today.toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-    : "";
 
   const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
   const todayLabel = today
