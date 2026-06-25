@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen } from "lucide-react";
+import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/providers/AuthProvider";
@@ -8,10 +8,18 @@ import { CategoryBadge } from "@/components/CategoryPicker";
 import { PRINTERS } from "@/lib/printers";
 import { usePrinterFolderStatus } from "@/lib/printerStatus";
 import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
 });
+
+interface DaySummary {
+  incoming: number;
+  outgoing: number;
+  processed: number;
+  pending: number;
+}
 
 interface Stats {
   incoming: number;
