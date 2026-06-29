@@ -27,7 +27,7 @@ export const translations = {
     reports: "Rapports",
     settings: "Paramètres",
     // Dashboard
-    totalIncoming: "Total arrivés",
+    totalIncoming: "Arrivées du jour",
     totalOutgoing: "Total départs",
     pending: "En attente",
     processedToday: "Traités aujourd'hui",
@@ -212,7 +212,7 @@ export const translations = {
     activity: "Activity & Statistics",
     reports: "Reports",
     settings: "Settings",
-    totalIncoming: "Total incoming",
+    totalIncoming: "Today's incoming",
     totalOutgoing: "Total outgoing",
     pending: "Pending",
     processedToday: "Processed today",
