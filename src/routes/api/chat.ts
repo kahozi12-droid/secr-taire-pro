@@ -210,6 +210,69 @@ Règles :
                 return { count: data?.length ?? 0, results: data ?? [] };
               },
             }),
+            search_reports: tool({
+              description: "Recherche dans les classeurs de rapports (mission, technical, financial, administrative, daily).",
+              inputSchema: z.object({
+                query: z.string().optional(),
+                category: z.enum(["mission", "technical", "financial", "administrative", "daily", "any"]).default("any"),
+                year: z.number().int().optional(),
+                limit: z.number().min(1).max(25).default(15),
+              }),
+              execute: async (args) => {
+                let q = sb
+                  .from("report_documents")
+                  .select("id,title,description,category,report_date,file_path,file_name,mime_type,read_by_director,created_at")
+                  .order("report_date", { ascending: false })
+                  .limit(args.limit);
+                if (args.category !== "any") q = q.eq("category", args.category as "mission" | "technical" | "financial" | "administrative" | "daily");
+                if (args.year) q = q.gte("report_date", `${args.year}-01-01`).lte("report_date", `${args.year}-12-31`);
+                if (args.query) {
+                  const like = `%${args.query}%`;
+                  q = q.or(`title.ilike.${like},description.ilike.${like},file_name.ilike.${like}`);
+                }
+                const { data, error } = await q;
+                if (error) return { error: error.message };
+                return { count: data?.length ?? 0, results: data ?? [] };
+              },
+            }),
+            get_daily_report: tool({
+              description: "Récupère le snapshot du rapport journalier auto-généré pour une date.",
+              inputSchema: z.object({ date: z.string().describe("YYYY-MM-DD").optional() }),
+              execute: async ({ date }) => {
+                const d = date ?? today;
+                const { data, error } = await sb
+                  .from("daily_reports")
+                  .select("report_date,payload,generated_at")
+                  .eq("report_date", d)
+                  .maybeSingle();
+                if (error) return { error: error.message };
+                return data ?? { error: "not_found", date: d };
+              },
+            }),
+            get_file_url: tool({
+              description: "Génère une URL signée (1h) pour ouvrir/télécharger un fichier joint à un courrier ou rapport. Fournis le file_path retourné par les autres outils.",
+              inputSchema: z.object({
+                file_path: z.string().describe("Chemin dans le bucket 'documents', ex: incoming/2026/IN-2026-00001_SAE-DEM.pdf"),
+              }),
+              execute: async ({ file_path }) => {
+                const { data, error } = await sb.storage.from("documents").createSignedUrl(file_path, 3600);
+                if (error) return { error: error.message };
+                return { url: data.signedUrl, expires_in_seconds: 3600 };
+              },
+            }),
+            list_storage: tool({
+              description: "Liste les fichiers du bucket 'documents' dans un dossier (ex: 'incoming/2026', 'reports/financial/2026').",
+              inputSchema: z.object({
+                folder: z.string().default("").describe("Préfixe de dossier, vide pour la racine"),
+                limit: z.number().min(1).max(100).default(50),
+              }),
+              execute: async ({ folder, limit }) => {
+                const { data, error } = await sb.storage.from("documents").list(folder, { limit, sortBy: { column: "created_at", order: "desc" } });
+                if (error) return { error: error.message };
+                return { folder, count: data?.length ?? 0, items: data ?? [] };
+              },
+            }),
+
           },
         });
 
