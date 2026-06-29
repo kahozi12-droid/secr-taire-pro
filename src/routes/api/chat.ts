@@ -34,18 +34,29 @@ export const Route = createFileRoute("/api/chat")({
         const lang = body.lang === "en" ? "en" : "fr";
         const today = new Date().toISOString().slice(0, 10);
 
-        const systemFr = `Tu es l'assistant intelligent du Secrétariat de Direction (SAEMAPE). Rôle utilisateur: ${role === "director" ? "Directeur" : "Secrétaire"}. Date du jour: ${today}.
+        const systemFr = `Tu es l'assistant intelligent du Secrétariat de Direction (SAEMAPE - DigiCab). Rôle utilisateur: ${role === "director" ? "Directeur" : "Secrétaire"}. Date du jour: ${today}.
 
-Tu aides à : (1) rechercher des courriers en langage naturel, (2) résumer/classer des documents, (3) générer rapports & analyses, (4) consulter la bibliothèque juridique, (5) productivité (rappels, suggestions, briefings).
+Tu as accès EN LECTURE à TOUTES les sources de l'application :
+- Courriers entrants & sortants (table documents, avec fichiers joints dans le bucket "documents/incoming|outgoing/<année>/...")
+- Rapports classés (table report_documents : missions, technical, financial, administrative, daily — fichiers dans le bucket "documents/reports/<categorie>/<année>/...")
+- Rapports journaliers auto-générés (table daily_reports, snapshot JSON par date)
+- Bibliothèque juridique (table legal_texts + annotations + favoris)
+- Autres traitements quotidiens (table other_tasks)
+- Journal d'activité (table activity_log)
+
+Quand on te demande un document, utilise systématiquement les outils :
+1. search_documents / search_reports / search_legal pour le trouver
+2. get_file_url pour obtenir un lien signé (1h) que tu fournis à l'utilisateur sous forme [📎 Ouvrir le fichier](url)
+3. Ne dis JAMAIS "je n'ai pas accès" — interroge la base avant.
 
 Règles :
 - Réponds toujours en français sauf si l'utilisateur écrit en anglais.
-- Utilise les outils pour interroger la base avant d'inventer un fait.
-- Sois concis, structuré (listes, titres courts). Cite les codes de référence des documents quand pertinent.
-- Pour le Directeur: fournis briefings, synthèses, alertes. Ne propose pas d'actions CRUD.
-- Pour la Secrétaire: propose des actions concrètes et raccourcis.`;
+- Sois concis, structuré (listes, titres courts). Cite les codes de référence et dates.
+- Pour le Directeur: briefings, synthèses, alertes. Pas d'actions CRUD.
+- Pour la Secrétaire: actions concrètes et raccourcis.`;
 
         const systemEn = systemFr.replace("Réponds toujours en français sauf si l'utilisateur écrit en anglais.", "Always reply in English unless the user writes in French.");
+
 
         const gateway = createLovableAiGatewayProvider(apiKey);
         const result = streamText({
@@ -67,7 +78,7 @@ Règles :
               execute: async (args) => {
                 let q = sb
                   .from("documents")
-                  .select("id,reference_code,order_number,title,description,sender,recipient,type,status,document_date,created_at")
+                  .select("id,reference_code,order_number,title,description,sender,recipient,type,status,document_date,file_path,file_name,mime_type,category_main,category_sub,created_at")
                   .order("created_at", { ascending: false })
                   .limit(args.limit);
                 if (args.type !== "any") q = q.eq("type", args.type);
@@ -199,6 +210,69 @@ Règles :
                 return { count: data?.length ?? 0, results: data ?? [] };
               },
             }),
+            search_reports: tool({
+              description: "Recherche dans les classeurs de rapports (mission, technical, financial, administrative, daily).",
+              inputSchema: z.object({
+                query: z.string().optional(),
+                category: z.enum(["mission", "technical", "financial", "administrative", "daily", "any"]).default("any"),
+                year: z.number().int().optional(),
+                limit: z.number().min(1).max(25).default(15),
+              }),
+              execute: async (args) => {
+                let q = sb
+                  .from("report_documents")
+                  .select("id,title,description,category,report_date,file_path,file_name,mime_type,read_by_director,created_at")
+                  .order("report_date", { ascending: false })
+                  .limit(args.limit);
+                if (args.category !== "any") q = q.eq("category", args.category as "mission" | "technical" | "financial" | "administrative" | "daily");
+                if (args.year) q = q.gte("report_date", `${args.year}-01-01`).lte("report_date", `${args.year}-12-31`);
+                if (args.query) {
+                  const like = `%${args.query}%`;
+                  q = q.or(`title.ilike.${like},description.ilike.${like},file_name.ilike.${like}`);
+                }
+                const { data, error } = await q;
+                if (error) return { error: error.message };
+                return { count: data?.length ?? 0, results: data ?? [] };
+              },
+            }),
+            get_daily_report: tool({
+              description: "Récupère le snapshot du rapport journalier auto-généré pour une date.",
+              inputSchema: z.object({ date: z.string().describe("YYYY-MM-DD").optional() }),
+              execute: async ({ date }) => {
+                const d = date ?? today;
+                const { data, error } = await sb
+                  .from("daily_reports")
+                  .select("report_date,payload,generated_at")
+                  .eq("report_date", d)
+                  .maybeSingle();
+                if (error) return { error: error.message };
+                return data ?? { error: "not_found", date: d };
+              },
+            }),
+            get_file_url: tool({
+              description: "Génère une URL signée (1h) pour ouvrir/télécharger un fichier joint à un courrier ou rapport. Fournis le file_path retourné par les autres outils.",
+              inputSchema: z.object({
+                file_path: z.string().describe("Chemin dans le bucket 'documents', ex: incoming/2026/IN-2026-00001_SAE-DEM.pdf"),
+              }),
+              execute: async ({ file_path }) => {
+                const { data, error } = await sb.storage.from("documents").createSignedUrl(file_path, 3600);
+                if (error) return { error: error.message };
+                return { url: data.signedUrl, expires_in_seconds: 3600 };
+              },
+            }),
+            list_storage: tool({
+              description: "Liste les fichiers du bucket 'documents' dans un dossier (ex: 'incoming/2026', 'reports/financial/2026').",
+              inputSchema: z.object({
+                folder: z.string().default("").describe("Préfixe de dossier, vide pour la racine"),
+                limit: z.number().min(1).max(100).default(50),
+              }),
+              execute: async ({ folder, limit }) => {
+                const { data, error } = await sb.storage.from("documents").list(folder, { limit, sortBy: { column: "created_at", order: "desc" } });
+                if (error) return { error: error.message };
+                return { folder, count: data?.length ?? 0, items: data ?? [] };
+              },
+            }),
+
           },
         });
 
