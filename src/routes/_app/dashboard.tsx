@@ -82,7 +82,7 @@ function Dashboard() {
   const loadAll = async () => {
     const todayStr = new Date().toISOString().slice(0, 10);
     const [inc, out, pen, proc, recentDocs, acts] = await Promise.all([
-      supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "incoming"),
+      supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "incoming").eq("document_date", todayStr),
       supabase.from("documents").select("*", { count: "exact", head: true }).eq("type", "outgoing"),
       supabase.from("documents").select("*", { count: "exact", head: true }).eq("status", "pending"),
       supabase.from("documents").select("*", { count: "exact", head: true }).eq("status", "processed").gte("updated_at", todayStr),
