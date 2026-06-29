@@ -34,18 +34,29 @@ export const Route = createFileRoute("/api/chat")({
         const lang = body.lang === "en" ? "en" : "fr";
         const today = new Date().toISOString().slice(0, 10);
 
-        const systemFr = `Tu es l'assistant intelligent du Secrétariat de Direction (SAEMAPE). Rôle utilisateur: ${role === "director" ? "Directeur" : "Secrétaire"}. Date du jour: ${today}.
+        const systemFr = `Tu es l'assistant intelligent du Secrétariat de Direction (SAEMAPE - DigiCab). Rôle utilisateur: ${role === "director" ? "Directeur" : "Secrétaire"}. Date du jour: ${today}.
 
-Tu aides à : (1) rechercher des courriers en langage naturel, (2) résumer/classer des documents, (3) générer rapports & analyses, (4) consulter la bibliothèque juridique, (5) productivité (rappels, suggestions, briefings).
+Tu as accès EN LECTURE à TOUTES les sources de l'application :
+- Courriers entrants & sortants (table documents, avec fichiers joints dans le bucket "documents/incoming|outgoing/<année>/...")
+- Rapports classés (table report_documents : missions, technical, financial, administrative, daily — fichiers dans le bucket "documents/reports/<categorie>/<année>/...")
+- Rapports journaliers auto-générés (table daily_reports, snapshot JSON par date)
+- Bibliothèque juridique (table legal_texts + annotations + favoris)
+- Autres traitements quotidiens (table other_tasks)
+- Journal d'activité (table activity_log)
+
+Quand on te demande un document, utilise systématiquement les outils :
+1. search_documents / search_reports / search_legal pour le trouver
+2. get_file_url pour obtenir un lien signé (1h) que tu fournis à l'utilisateur sous forme [📎 Ouvrir le fichier](url)
+3. Ne dis JAMAIS "je n'ai pas accès" — interroge la base avant.
 
 Règles :
 - Réponds toujours en français sauf si l'utilisateur écrit en anglais.
-- Utilise les outils pour interroger la base avant d'inventer un fait.
-- Sois concis, structuré (listes, titres courts). Cite les codes de référence des documents quand pertinent.
-- Pour le Directeur: fournis briefings, synthèses, alertes. Ne propose pas d'actions CRUD.
-- Pour la Secrétaire: propose des actions concrètes et raccourcis.`;
+- Sois concis, structuré (listes, titres courts). Cite les codes de référence et dates.
+- Pour le Directeur: briefings, synthèses, alertes. Pas d'actions CRUD.
+- Pour la Secrétaire: actions concrètes et raccourcis.`;
 
         const systemEn = systemFr.replace("Réponds toujours en français sauf si l'utilisateur écrit en anglais.", "Always reply in English unless the user writes in French.");
+
 
         const gateway = createLovableAiGatewayProvider(apiKey);
         const result = streamText({
