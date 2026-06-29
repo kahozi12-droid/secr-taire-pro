@@ -78,7 +78,7 @@ Règles :
               execute: async (args) => {
                 let q = sb
                   .from("documents")
-                  .select("id,reference_code,order_number,title,description,sender,recipient,type,status,document_date,created_at")
+                  .select("id,reference_code,order_number,title,description,sender,recipient,type,status,document_date,file_path,file_name,mime_type,category_main,category_sub,created_at")
                   .order("created_at", { ascending: false })
                   .limit(args.limit);
                 if (args.type !== "any") q = q.eq("type", args.type);
