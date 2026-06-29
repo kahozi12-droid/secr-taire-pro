@@ -1,0 +1,10 @@
+{
+  "name": "digicab-desktop",
+  "productName": "DigiCab - SAE-LBA",
+  "version": "1.0.0",
+  "description": "DigiCab - SAE/LBA — Application bureau (Windows)",
+  "main": "main.cjs",
+  "author": "DigiCab",
+  "license": "UNLICENSED",
+  "private": true
+}
