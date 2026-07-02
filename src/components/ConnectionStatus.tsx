@@ -71,6 +71,8 @@ export function ConnectionStatus() {
     setTimeout(() => setSyncing(false), 1800);
   };
 
+  if (!mounted) return null;
+
   return (
     <>
       {/* Top banner: offline / syncing / reconnected */}
