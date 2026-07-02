@@ -19,15 +19,17 @@ export function ConnectionStatus() {
   const { lang } = useI18n();
   const fr = lang === "fr";
 
-  const [networkOnline, setNetworkOnline] = useState(
-    typeof navigator === "undefined" ? true : navigator.onLine,
-  );
-  const [forcedOffline, setForcedOffline] = useState<boolean>(() => {
-    if (typeof localStorage === "undefined") return false;
-    return localStorage.getItem(FORCED_OFFLINE_KEY) === "1";
-  });
+  const [mounted, setMounted] = useState(false);
+  const [networkOnline, setNetworkOnline] = useState(true);
+  const [forcedOffline, setForcedOffline] = useState<boolean>(false);
   const [justReconnected, setJustReconnected] = useState(false);
   const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setNetworkOnline(navigator.onLine);
+    setForcedOffline(localStorage.getItem(FORCED_OFFLINE_KEY) === "1");
+  }, []);
 
   const online = networkOnline && !forcedOffline;
 
@@ -68,6 +70,8 @@ export function ConnectionStatus() {
     triggerSync();
     setTimeout(() => setSyncing(false), 1800);
   };
+
+  if (!mounted) return null;
 
   return (
     <>
