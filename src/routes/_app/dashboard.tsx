@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen, CalendarDays } from "lucide-react";
+import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen, CalendarDays, RefreshCw, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/providers/AuthProvider";
@@ -9,6 +10,9 @@ import { PRINTERS } from "@/lib/printers";
 import { usePrinterFolderStatus } from "@/lib/printerStatus";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { ensureLocalRoot, useLocalRoot } from "@/lib/localRootStore";
+import { syncCloudToLocal, syncLocalToCloud } from "@/lib/scannerArchive";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
