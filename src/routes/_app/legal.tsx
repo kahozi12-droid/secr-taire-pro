@@ -263,7 +263,7 @@ function CreateEditDialog({
       let fileName = existing?.file_name ?? null;
       if (file) {
         const ext = file.name.split(".").pop() ?? "bin";
-        const path = `legal/${Date.now()}-${form.reference}.${ext}`.replace(/\s+/g, "_");
+        const path = `${userId}/legal/${Date.now()}-${form.reference}.${ext}`.replace(/\s+/g, "_");
         const { error } = await supabase.storage.from("documents").upload(path, file, { contentType: file.type });
         if (error) throw error;
         filePath = path; fileName = file.name;
