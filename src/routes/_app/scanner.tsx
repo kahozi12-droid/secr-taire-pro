@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { printerForRole, PRINTERS } from "@/lib/printers";
 import { setFolderStatus, usePrinterFolderStatus } from "@/lib/printerStatus";
 import { NewDocumentDialog } from "@/components/NewDocumentDialog";
+import { ScannerFolderDialog } from "@/components/ScannerFolderDialog";
 
 export const Route = createFileRoute("/_app/scanner")({
   component: ScannerPage,
@@ -45,6 +46,7 @@ function ScannerPage() {
   const [pending, setPending] = useState<PendingScan[]>([]);
   const [active, setActive] = useState<PendingScan | null>(null);
   const [classifyOpen, setClassifyOpen] = useState<"incoming" | "outgoing" | null>(null);
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
 
   const importPlainFile = useCallback((file: File) => {
     const key = `${file.name}::${file.lastModified}::${file.size}`;
@@ -103,28 +105,9 @@ function ScannerPage() {
     }
   }, [importFile]);
 
-  const connect = async () => {
-    if (!supported) {
-      toast.error(t("folderUnsupported"));
-      return;
-    }
-    try {
-      // @ts-expect-error showDirectoryPicker not yet in TS lib
-      const handle: FileSystemDirectoryHandle = await window.showDirectoryPicker({
-        mode: "read",
-        id: "scanner-folder",
-      });
-      dirHandleRef.current = handle;
-      setFolderName(handle.name);
-      setFolderStatus(roleKey, handle.name);
-      seenRef.current = new Set();
-      setPending([]);
-      await scanFolder();
-      toast.success(t("folderConnected") + " · " + handle.name);
-    } catch {
-      // user cancelled
-    }
-  };
+  // Folder picking is now handled by <ScannerFolderDialog />; it calls
+  // onLocalRootChange to wire the handle into the auto-watch loop below.
+
 
   // Poll the folder while connected
   useEffect(() => {
@@ -288,7 +271,7 @@ function ScannerPage() {
             <p className="text-sm text-muted-foreground">{t("folderUnsupported")}</p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={connect} disabled={!supported} variant={folderName ? "outline" : "default"}>
+            <Button onClick={() => setFolderDialogOpen(true)} variant={folderName ? "outline" : "default"}>
               {folderName ? <FolderOpen className="mr-2 h-4 w-4" /> : <Folder className="mr-2 h-4 w-4" />}
               {folderName ? t("reconnectFolder") : t("connectFolder")}
             </Button>
@@ -436,6 +419,19 @@ function ScannerPage() {
           onCreated={onClassified}
         />
       )}
+
+      <ScannerFolderDialog
+        open={folderDialogOpen}
+        onOpenChange={setFolderDialogOpen}
+        onLocalRootChange={(handle, name) => {
+          dirHandleRef.current = handle;
+          setFolderName(name);
+          setFolderStatus(roleKey, name);
+          seenRef.current = new Set();
+          setPending([]);
+          if (handle) void scanFolder();
+        }}
+      />
     </div>
   );
 }
