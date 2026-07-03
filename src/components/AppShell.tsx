@@ -10,6 +10,7 @@ import {
   Languages,
   ShieldCheck,
   Printer,
+  Cloud,
   Search,
   Settings as SettingsIcon,
   Sparkles,
@@ -36,6 +37,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard, directorAllowed: true, secretaryAllowed: true },
+  { to: "/cloud", labelKey: "cloudManagement", icon: Cloud, directorAllowed: true, secretaryAllowed: true },
   { to: "/scanner", labelKey: "scanner", icon: Printer, directorAllowed: true, secretaryAllowed: true },
   { to: "/incoming", labelKey: "incoming", icon: Inbox, directorAllowed: true, secretaryAllowed: true },
   { to: "/outgoing", labelKey: "outgoing", icon: Send, directorAllowed: true, secretaryAllowed: true },
