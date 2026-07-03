@@ -33,10 +33,14 @@ export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
     window.open(data.signedUrl, "_blank");
   };
 
+  const [archiveOpen, setArchiveOpen] = useState(false);
+
   const updateStatus = async (status: "processed" | "archived") => {
     const { error } = await supabase.from("documents").update({ status }).eq("id", doc.id);
-    if (error) toast.error(error.message);
-    else { toast.success(t("saved")); onChanged(); }
+    if (error) { toast.error(error.message); return; }
+    toast.success(t("saved"));
+    onChanged();
+    if (status === "processed") setArchiveOpen(true);
   };
 
   const statusInfo = {
