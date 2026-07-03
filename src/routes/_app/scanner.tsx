@@ -46,6 +46,7 @@ function ScannerPage() {
   const [pending, setPending] = useState<PendingScan[]>([]);
   const [active, setActive] = useState<PendingScan | null>(null);
   const [classifyOpen, setClassifyOpen] = useState<"incoming" | "outgoing" | null>(null);
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
 
   const importPlainFile = useCallback((file: File) => {
     const key = `${file.name}::${file.lastModified}::${file.size}`;
