@@ -44,6 +44,102 @@ export type Database = {
         }
         Relationships: []
       }
+      cloud_activity_log: {
+        Row: {
+          action: string
+          bytes: number | null
+          created_at: string
+          id: string
+          path: string | null
+          target_path: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          bytes?: number | null
+          created_at?: string
+          id?: string
+          path?: string | null
+          target_path?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          bytes?: number | null
+          created_at?: string
+          id?: string
+          path?: string | null
+          target_path?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cloud_sync_log: {
+        Row: {
+          created_at: string
+          direction: string
+          duration_ms: number
+          errors: number
+          files_skipped: number
+          files_synced: number
+          id: string
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          duration_ms?: number
+          errors?: number
+          files_skipped?: number
+          files_synced?: number
+          id?: string
+          scope: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          duration_ms?: number
+          errors?: number
+          files_skipped?: number
+          files_synced?: number
+          id?: string
+          scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cloud_trash: {
+        Row: {
+          auto_purge_at: string
+          id: string
+          original_path: string
+          size: number
+          trashed_at: string
+          trashed_by: string
+          trashed_path: string
+        }
+        Insert: {
+          auto_purge_at?: string
+          id?: string
+          original_path: string
+          size?: number
+          trashed_at?: string
+          trashed_by: string
+          trashed_path: string
+        }
+        Update: {
+          auto_purge_at?: string
+          id?: string
+          original_path?: string
+          size?: number
+          trashed_at?: string
+          trashed_by?: string
+          trashed_path?: string
+        }
+        Relationships: []
+      }
       daily_reports: {
         Row: {
           generated_at: string
