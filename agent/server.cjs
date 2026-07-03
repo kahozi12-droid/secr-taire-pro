@@ -26,8 +26,36 @@ const path = require("path");
 const crypto = require("crypto");
 
 const PORT = parseInt(process.env.DIGICAB_AGENT_PORT || "17777", 10);
-const VERSION = "1.0.0";
-const TOKEN = process.env.DIGICAB_AGENT_TOKEN || "";
+const VERSION = "1.1.0";
+
+// SECURITY: token is now MANDATORY. If DIGICAB_AGENT_TOKEN is unset we generate
+// one and persist it next to this script so the user can paste it into the app.
+const TOKEN_FILE = path.join(__dirname, ".agent-token");
+function loadOrCreateToken() {
+  if (process.env.DIGICAB_AGENT_TOKEN) return process.env.DIGICAB_AGENT_TOKEN;
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const t = fs.readFileSync(TOKEN_FILE, "utf8").trim();
+      if (t) return t;
+    }
+  } catch {}
+  const t = require("crypto").randomBytes(24).toString("hex");
+  try { fs.writeFileSync(TOKEN_FILE, t, { mode: 0o600 }); } catch {}
+  return t;
+}
+const TOKEN = loadOrCreateToken();
+
+// SECURITY: only paths under one of these base directories may be listed/read.
+// Configure via DIGICAB_AGENT_FOLDERS (OS-path-separator separated), e.g.
+//   DIGICAB_AGENT_FOLDERS="C:\Users\me\DigiCab\Watched;C:\Scans"
+// Defaults to a single "DigiCab" folder under the user home if unset.
+const ALLOWED_FOLDERS = (process.env.DIGICAB_AGENT_FOLDERS
+  ? process.env.DIGICAB_AGENT_FOLDERS.split(path.delimiter)
+  : [path.join(os.homedir(), "DigiCab")]
+).map((p) => {
+  try { return fs.realpathSync(path.resolve(p)); }
+  catch { return path.resolve(p); }
+});
 
 // Allowed web origins. The DigiCab web app calls this agent from these.
 const ALLOWED_ORIGINS = [
