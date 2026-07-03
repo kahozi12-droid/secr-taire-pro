@@ -58,12 +58,14 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
+    // SECURITY: new accounts are always created as Secretary. Promotion to Director
+    // is done by an existing Director from the app, never through signup metadata.
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: fullName, account_type: accountType },
+        data: { full_name: fullName },
       },
     });
     setBusy(false);
@@ -158,18 +160,11 @@ function AuthPage() {
                   <Label htmlFor="su-pw">{t("password")}</Label>
                   <Input id="su-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="su-type">{t("accountType")}</Label>
-                  <Select value={accountType} onValueChange={(v) => setAccountType(v as "secretary" | "director")}>
-                    <SelectTrigger id="su-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="director">{t("accountDirector")}</SelectItem>
-                      <SelectItem value="secretary">{t("accountSecretary")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "fr"
+                    ? "Les nouveaux comptes sont créés comme Secrétaire. Un Directeur existant peut ensuite promouvoir votre compte."
+                    : "New accounts are created as Secretary. An existing Director can promote your account afterwards."}
+                </p>
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("signUp")}

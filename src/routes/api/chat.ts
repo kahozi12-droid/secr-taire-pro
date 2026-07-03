@@ -19,16 +19,23 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const authHeader = request.headers.get("authorization");
+        const token = authHeader?.replace(/^Bearer\s+/i, "") ?? null;
+        if (!token) return new Response("Unauthorized", { status: 401 });
+
+        // SECURITY: verify the JWT before spending any paid AI resources.
+        const sb = getUserSupabase(token);
+        const { data: userData, error: userErr } = await sb.auth.getUser(token);
+        if (userErr || !userData?.user) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
         const body = (await request.json()) as ChatBody;
         if (!Array.isArray(body.messages)) {
           return new Response("messages required", { status: 400 });
         }
         const apiKey = process.env.LOVABLE_API_KEY;
         if (!apiKey) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-
-        const authHeader = request.headers.get("authorization");
-        const token = authHeader?.replace(/^Bearer\s+/i, "") ?? null;
-        const sb = getUserSupabase(token);
 
         const role = body.role === "director" ? "director" : "secretary";
         const lang = body.lang === "en" ? "en" : "fr";

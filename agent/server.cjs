@@ -26,8 +26,36 @@ const path = require("path");
 const crypto = require("crypto");
 
 const PORT = parseInt(process.env.DIGICAB_AGENT_PORT || "17777", 10);
-const VERSION = "1.0.0";
-const TOKEN = process.env.DIGICAB_AGENT_TOKEN || "";
+const VERSION = "1.1.0";
+
+// SECURITY: token is now MANDATORY. If DIGICAB_AGENT_TOKEN is unset we generate
+// one and persist it next to this script so the user can paste it into the app.
+const TOKEN_FILE = path.join(__dirname, ".agent-token");
+function loadOrCreateToken() {
+  if (process.env.DIGICAB_AGENT_TOKEN) return process.env.DIGICAB_AGENT_TOKEN;
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const t = fs.readFileSync(TOKEN_FILE, "utf8").trim();
+      if (t) return t;
+    }
+  } catch {}
+  const t = require("crypto").randomBytes(24).toString("hex");
+  try { fs.writeFileSync(TOKEN_FILE, t, { mode: 0o600 }); } catch {}
+  return t;
+}
+const TOKEN = loadOrCreateToken();
+
+// SECURITY: only paths under one of these base directories may be listed/read.
+// Configure via DIGICAB_AGENT_FOLDERS (OS-path-separator separated), e.g.
+//   DIGICAB_AGENT_FOLDERS="C:\Users\me\DigiCab\Watched;C:\Scans"
+// Defaults to a single "DigiCab" folder under the user home if unset.
+const ALLOWED_FOLDERS = (process.env.DIGICAB_AGENT_FOLDERS
+  ? process.env.DIGICAB_AGENT_FOLDERS.split(path.delimiter)
+  : [path.join(os.homedir(), "DigiCab")]
+).map((p) => {
+  try { return fs.realpathSync(path.resolve(p)); }
+  catch { return path.resolve(p); }
+});
 
 // Allowed web origins. The DigiCab web app calls this agent from these.
 const ALLOWED_ORIGINS = [
@@ -172,10 +200,18 @@ function performScan({ device, format = "pdf" } = {}) {
 }
 
 // ---------- Folder bridge ----------
+// SECURITY: resolves p and confirms it stays inside one of ALLOWED_FOLDERS.
+// Uses realpath to defeat symlink escapes when the target exists.
 function safePath(p) {
   if (!p || typeof p !== "string") return null;
-  const resolved = path.resolve(p);
-  return resolved;
+  let resolved = path.resolve(p);
+  try { resolved = fs.realpathSync(resolved); } catch { /* target may not exist */ }
+  const norm = resolved + path.sep;
+  const ok = ALLOWED_FOLDERS.some((base) => {
+    const b = base + path.sep;
+    return norm === b || norm.startsWith(b);
+  });
+  return ok ? resolved : null;
 }
 
 // ---------- HTTP routing ----------
@@ -183,20 +219,22 @@ const server = http.createServer(async (req, res) => {
   setCors(req, res);
   if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
 
-  if (TOKEN) {
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+
+  // /health is the only unauthenticated endpoint; everything else requires the token.
+  if (url.pathname !== "/health") {
     const sent = req.headers["x-agent-token"];
-    if (sent !== TOKEN && req.url !== "/health") {
-      return json(res, 401, { error: "Invalid token" });
+    if (!sent || sent !== TOKEN) {
+      return json(res, 401, { error: "Invalid or missing X-Agent-Token" });
     }
   }
-
-  const url = new URL(req.url, `http://localhost:${PORT}`);
 
   try {
     if (url.pathname === "/health") {
       return json(res, 200, {
         ok: true, version: VERSION, platform: process.platform,
-        hostname: os.hostname(), requiresToken: !!TOKEN,
+        hostname: os.hostname(), requiresToken: true,
+        allowedFolders: ALLOWED_FOLDERS,
       });
     }
 
@@ -228,7 +266,8 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/folder/list" && req.method === "GET") {
       const p = safePath(url.searchParams.get("path"));
-      if (!p || !fs.existsSync(p)) return json(res, 400, { error: "Invalid path" });
+      if (!p) return json(res, 403, { error: "Path is not inside an allowed folder", allowedFolders: ALLOWED_FOLDERS });
+      if (!fs.existsSync(p)) return json(res, 404, { error: "Path not found" });
       const entries = fs.readdirSync(p, { withFileTypes: true })
         .filter((e) => e.isFile())
         .map((e) => {
@@ -242,7 +281,10 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/folder/file" && req.method === "GET") {
       const p = safePath(url.searchParams.get("path"));
-      if (!p || !fs.existsSync(p)) return json(res, 400, { error: "Invalid path" });
+      if (!p) return json(res, 403, { error: "Path is not inside an allowed folder", allowedFolders: ALLOWED_FOLDERS });
+      if (!fs.existsSync(p)) return json(res, 404, { error: "File not found" });
+      const st = fs.statSync(p);
+      if (!st.isFile()) return json(res, 400, { error: "Not a file" });
       const buf = fs.readFileSync(p);
       return json(res, 200, { filename: path.basename(p), base64: buf.toString("base64") });
     }
@@ -253,12 +295,22 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Ensure default allowed folder exists so the user can drop files into it.
+for (const f of ALLOWED_FOLDERS) {
+  try { fs.mkdirSync(f, { recursive: true }); } catch {}
+}
+
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`╔════════════════════════════════════════════════╗`);
-  console.log(`║  DigiCab Local Agent v${VERSION}                  ║`);
-  console.log(`║  Listening on  http://127.0.0.1:${PORT}           ║`);
-  console.log(`║  Platform: ${process.platform.padEnd(36)}║`);
-  console.log(`║  Token required: ${(TOKEN ? "YES" : "NO").padEnd(30)}║`);
-  console.log(`╚════════════════════════════════════════════════╝`);
+  console.log(`╔════════════════════════════════════════════════════════════╗`);
+  console.log(`║  DigiCab Local Agent v${VERSION}                                ║`);
+  console.log(`║  Listening on  http://127.0.0.1:${PORT}                         ║`);
+  console.log(`║  Platform: ${process.platform}`);
+  console.log(`╠════════════════════════════════════════════════════════════╣`);
+  console.log(`║  X-Agent-Token (paste into DigiCab → Settings → Agent):     `);
+  console.log(`║  ${TOKEN}`);
+  console.log(`╠════════════════════════════════════════════════════════════╣`);
+  console.log(`║  Allowed folders (folder bridge is restricted to these):    `);
+  for (const f of ALLOWED_FOLDERS) console.log(`║   • ${f}`);
+  console.log(`╚════════════════════════════════════════════════════════════╝`);
   console.log(`Keep this window open. Close it to stop the agent.`);
 });
