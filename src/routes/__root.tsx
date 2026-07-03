@@ -28,7 +28,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" },
-      { title: "Secrétariat Direction — Gestion documentaire" },
+      { title: "Digicab — Gestion documentaire" },
       {
         name: "description",
         content:
@@ -39,6 +39,15 @@ export const Route = createRootRoute({
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Secrétariat" },
       { name: "mobile-web-app-capable", content: "yes" },
+      { property: "og:title", content: "Digicab — Gestion documentaire" },
+      { name: "twitter:title", content: "Digicab — Gestion documentaire" },
+      { name: "description", content: "Secrétaire Pro automates administrative tasks and document management for public institutions." },
+      { property: "og:description", content: "Secrétaire Pro automates administrative tasks and document management for public institutions." },
+      { name: "twitter:description", content: "Secrétaire Pro automates administrative tasks and document management for public institutions." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fd581cd0-6ca6-411e-8a7a-ec60511a6b6e/id-preview-50c51cb8--59db28e4-70a3-49b8-a87c-b1f37b6976a8.lovable.app-1783067062069.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fd581cd0-6ca6-411e-8a7a-ec60511a6b6e/id-preview-50c51cb8--59db28e4-70a3-49b8-a87c-b1f37b6976a8.lovable.app-1783067062069.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
