@@ -100,6 +100,7 @@ export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
           )}
         </div>
       </div>
+      <ArchiveChoiceDialog open={archiveOpen} onOpenChange={setArchiveOpen} doc={doc} />
     </div>
   );
 }
