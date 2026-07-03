@@ -188,20 +188,68 @@ export default function PrinterManager() {
   };
 
   const detectUsb = async () => {
+    if (!hasUsb) {
+      toast.error("WebUSB indisponible. Utilisez Chrome/Edge (hors Safari/Firefox).");
+      return;
+    }
+    if (caps.inIframe) {
+      toast.error("USB bloqué dans l'aperçu (iframe). Ouvrez l'app dans un nouvel onglet.", {
+        action: { label: "Ouvrir", onClick: openInNewTab },
+      });
+      return;
+    }
+    if (!caps.isSecureContext) {
+      toast.error("WebUSB requiert HTTPS (ou localhost).");
+      return;
+    }
     try {
+      // Déjà autorisées : lister sans redemander
       // @ts-expect-error WebUSB
-      const dev = await navigator.usb.requestDevice({ filters: [{ classCode: 7 }] });
+      const already: any[] = await navigator.usb.getDevices();
+      if (already.length > 0) {
+        const items: DetectedDevice[] = already.map((dev) => ({
+          name: dev.productName || `USB ${dev.vendorId}:${dev.productId}`,
+          source: "USB",
+          details: `VID ${dev.vendorId?.toString(16)} / PID ${dev.productId?.toString(16)}${dev.manufacturerName ? ` – ${dev.manufacturerName}` : ""}`,
+          kind: "printer",
+        }));
+        setDetected((d) => [
+          ...items,
+          ...d.filter((x) => !items.some((i) => i.name === x.name)),
+        ]);
+        toast.success(`${items.length} périphérique(s) USB déjà autorisé(s)`);
+        return;
+      }
+      // Ouvrir le sélecteur natif — filtres larges pour couvrir imprimantes
+      // classiques (classCode 7) ET celles exposant une interface vendor-specific.
+      // @ts-expect-error WebUSB
+      const dev = await navigator.usb.requestDevice({
+        filters: [
+          { classCode: 7 }, // Printer class
+          { classCode: 255 }, // Vendor-specific (beaucoup d'imprimantes)
+        ],
+      });
       const name = dev.productName || `USB ${dev.vendorId}:${dev.productId}`;
       const item: DetectedDevice = {
         name,
         source: "USB",
-        details: `VID ${dev.vendorId?.toString(16)} / PID ${dev.productId?.toString(16)}`,
+        details: `VID ${dev.vendorId?.toString(16)} / PID ${dev.productId?.toString(16)}${dev.manufacturerName ? ` – ${dev.manufacturerName}` : ""}`,
         kind: "printer",
       };
       setDetected((d) => [item, ...d.filter((x) => x.name !== name)]);
       toast.success(`Détecté : ${name}`);
-    } catch {
-      toast.error("Aucun périphérique sélectionné");
+    } catch (err: any) {
+      const msg = String(err?.message || err || "");
+      if (/No device selected|cancelled/i.test(msg)) {
+        toast.error(
+          "Aucun périphérique dans la liste. Le pilote système capte peut-être déjà l'imprimante — utilisez l'agent local.",
+          { action: { label: "Agent local", onClick: detectLocalAgent } },
+        );
+      } else if (/permission|denied|SecurityError/i.test(msg)) {
+        toast.error("Permission USB refusée par le navigateur.");
+      } else {
+        toast.error(`Erreur USB : ${msg || "inconnue"}`);
+      }
     }
   };
 
