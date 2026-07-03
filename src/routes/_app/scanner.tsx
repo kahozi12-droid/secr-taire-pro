@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { printerForRole, PRINTERS } from "@/lib/printers";
 import { setFolderStatus, usePrinterFolderStatus } from "@/lib/printerStatus";
 import { NewDocumentDialog } from "@/components/NewDocumentDialog";
+import { ScannerFolderDialog } from "@/components/ScannerFolderDialog";
 
 export const Route = createFileRoute("/_app/scanner")({
   component: ScannerPage,
