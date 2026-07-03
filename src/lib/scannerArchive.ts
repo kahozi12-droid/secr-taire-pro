@@ -63,7 +63,6 @@ export interface TreeNode {
 }
 
 export function buildLogicalYearTree(year: number): TreeNode {
-  const subs = allSubFolders();
   const months: TreeNode[] = [];
   for (let m = 0; m < 12; m++) {
     const mName = monthFolderName(m);
@@ -72,7 +71,7 @@ export function buildLogicalYearTree(year: number): TreeNode {
       name: g,
       path: `${mPath}/${g}`,
       kind: "folder",
-      children: subs.map((s) => ({
+      children: subsForGroup(g).map((s) => ({
         name: s.code,
         path: `${mPath}/${g}/${s.code}`,
         kind: "folder",
