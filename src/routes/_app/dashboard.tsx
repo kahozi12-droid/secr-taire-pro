@@ -75,9 +75,11 @@ function StatCard({
 
 function Dashboard() {
   const { t, lang } = useI18n();
-  const { role, fullName } = useAuth();
+  const { role, fullName, user } = useAuth();
   const folderStatus = usePrinterFolderStatus();
   const directorLinked = !!folderStatus.director;
+  const localRoot = useLocalRoot();
+  const [syncing, setSyncing] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [recent, setRecent] = useState<Array<{ id: string; reference_code: string; title: string; type: string; category_sub: string; created_at: string }>>([]);
   const [activity, setActivity] = useState<Array<{ id: string; action: string; created_at: string; details: unknown }>>([]);
