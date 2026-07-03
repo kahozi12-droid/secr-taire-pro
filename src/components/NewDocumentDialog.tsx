@@ -101,7 +101,7 @@ export function NewDocumentDialog({ open, onOpenChange, type, onCreated, initial
       let mimeType: string | null = null;
       if (file) {
         const ext = file.name.split(".").pop() ?? "bin";
-        const path = `${type}/${new Date().getFullYear()}/${code}.${ext}`.replace(/\s+/g, "_");
+        const path = `${user.id}/${type}/${new Date().getFullYear()}/${code}.${ext}`.replace(/\s+/g, "_");
         const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
           contentType: file.type,
           upsert: false,
