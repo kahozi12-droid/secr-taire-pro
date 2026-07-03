@@ -323,7 +323,7 @@ function NewReportDialog({
       if (file) {
         const year = reportDate.slice(0, 4);
         const ext = file.name.split(".").pop() ?? "bin";
-        const path = `reports/${category}/${year}/${Date.now()}-${title}.${ext}`.replace(/\s+/g, "_");
+        const path = `${user.id}/reports/${category}/${year}/${Date.now()}-${title}.${ext}`.replace(/\s+/g, "_");
         const { error } = await supabase.storage.from("documents").upload(path, file, { contentType: file.type });
         if (error) throw error;
         filePath = path;
