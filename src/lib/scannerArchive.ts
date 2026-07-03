@@ -210,16 +210,15 @@ export async function localInitYear(
   year: number,
   onProgress?: (n: number, total: number) => void,
 ) {
-  const subs = allSubFolders();
   const groups = [FOLDER_INCOMING, FOLDER_OUTGOING];
-  const total = 12 * groups.length * subs.length;
+  const total = 12 * groups.reduce((acc, g) => acc + subsForGroup(g).length, 0);
   let n = 0;
   const yearDir = await ensureDir(root, [String(year)]);
   for (let m = 0; m < 12; m++) {
     const monthDir = await ensureDir(yearDir, [monthFolderName(m)]);
     for (const g of groups) {
       const gDir = await ensureDir(monthDir, [g]);
-      for (const s of subs) {
+      for (const s of subsForGroup(g)) {
         await ensureDir(gDir, [s.code]);
         n++;
         onProgress?.(n, total);
