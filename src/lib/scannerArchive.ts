@@ -366,3 +366,124 @@ export async function syncCloudToLocal(
   onProgress?.(cloudFiles.length, cloudFiles.length, "");
   return { downloaded, skipped };
 }
+
+// -----------------------------------------------------------------------------
+// Extended cloud helpers: rename, move, soft-delete (trash), restore, purge,
+// download-as-blob, statistics.
+// -----------------------------------------------------------------------------
+
+const TRASH_PREFIX = ".trash";
+
+export async function cloudDownload(uid: string, relativePath: string): Promise<Blob> {
+  const { data, error } = await supabase.storage
+    .from("documents")
+    .download(cloudPath(uid, relativePath));
+  if (error) throw error;
+  return data;
+}
+
+/** Copy then remove — Supabase Storage supports move natively. */
+export async function cloudMove(uid: string, from: string, to: string): Promise<void> {
+  const { error } = await supabase.storage
+    .from("documents")
+    .move(cloudPath(uid, from), cloudPath(uid, to));
+  if (error) throw error;
+}
+
+export async function cloudRename(uid: string, relative: string, newName: string): Promise<string> {
+  const parts = relative.split("/");
+  parts[parts.length - 1] = newName;
+  const to = parts.join("/");
+  await cloudMove(uid, relative, to);
+  return to;
+}
+
+/** Soft-delete: move the file to .trash/{timestamp}_{basename}. Returns new path. */
+export async function cloudSoftDelete(uid: string, relative: string): Promise<string> {
+  const ts = Date.now();
+  const base = relative.split("/").pop()!;
+  const to = `${TRASH_PREFIX}/${ts}_${base}`;
+  await cloudMove(uid, relative, to);
+  return to;
+}
+
+export async function cloudRestore(uid: string, trashedPath: string, originalPath: string): Promise<void> {
+  await cloudMove(uid, trashedPath, originalPath);
+}
+
+export async function cloudPurge(uid: string, trashedPath: string): Promise<void> {
+  await cloudDelete(uid, [trashedPath]);
+}
+
+export async function cloudMkdir(uid: string, relative: string): Promise<void> {
+  const placeholder = new File([""], ".keep", { type: "text/plain" });
+  await cloudUpload(uid, `${relative}/.keep`, placeholder);
+}
+
+export interface CloudFileEntry {
+  path: string;
+  name: string;
+  size: number;
+  updated_at?: string;
+}
+
+/** Recursively walk all files in the cloud archive (scoped to year or all). */
+export async function cloudWalkAll(uid: string, rootRelative = ""): Promise<CloudFileEntry[]> {
+  const out: CloudFileEntry[] = [];
+  const stack: string[] = [rootRelative];
+  while (stack.length) {
+    const cur = stack.pop()!;
+    const { folders, files } = await cloudList(uid, cur);
+    for (const f of files) {
+      if (f.name === ".keep") continue;
+      out.push({ path: f.path, name: f.name, size: f.size, updated_at: f.updated_at });
+    }
+    for (const d of folders) {
+      if (d.name === TRASH_PREFIX) continue;
+      stack.push(d.path);
+    }
+  }
+  return out;
+}
+
+export interface CloudStats {
+  totalFiles: number;
+  totalBytes: number;
+  byGroup: Record<string, { files: number; bytes: number }>;
+  bySub: Record<string, { files: number; bytes: number }>;
+  byMonth: Record<string, { files: number; bytes: number }>;
+}
+
+export function computeStats(files: CloudFileEntry[]): CloudStats {
+  const s: CloudStats = {
+    totalFiles: files.length,
+    totalBytes: 0,
+    byGroup: {},
+    bySub: {},
+    byMonth: {},
+  };
+  for (const f of files) {
+    s.totalBytes += f.size;
+    // path shape: {year}/{NN-Month}/{group}/{sub}/{name}
+    const parts = f.path.split("/");
+    const month = parts[1] ?? "?";
+    const group = parts[2] ?? "?";
+    const sub = parts[3] ?? "?";
+    s.byGroup[group] ??= { files: 0, bytes: 0 };
+    s.byGroup[group].files++; s.byGroup[group].bytes += f.size;
+    s.bySub[sub] ??= { files: 0, bytes: 0 };
+    s.bySub[sub].files++; s.bySub[sub].bytes += f.size;
+    s.byMonth[month] ??= { files: 0, bytes: 0 };
+    s.byMonth[month].files++; s.byMonth[month].bytes += f.size;
+  }
+  return s;
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} Ko`;
+  const mb = kb / 1024;
+  if (mb < 1024) return `${mb.toFixed(2)} Mo`;
+  return `${(mb / 1024).toFixed(2)} Go`;
+}
