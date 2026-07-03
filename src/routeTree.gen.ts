@@ -23,6 +23,7 @@ import { Route as AppOutgoingRouteImport } from './routes/_app/outgoing'
 import { Route as AppLegalRouteImport } from './routes/_app/legal'
 import { Route as AppIncomingRouteImport } from './routes/_app/incoming'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCloudRouteImport } from './routes/_app/cloud'
 import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
 import { Route as AppActivityRouteImport } from './routes/_app/activity'
 
@@ -95,6 +96,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCloudRoute = AppCloudRouteImport.update({
+  id: '/cloud',
+  path: '/cloud',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAssistantRoute = AppAssistantRouteImport.update({
   id: '/assistant',
   path: '/assistant',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/activity': typeof AppActivityRoute
   '/assistant': typeof AppAssistantRoute
+  '/cloud': typeof AppCloudRoute
   '/dashboard': typeof AppDashboardRoute
   '/incoming': typeof AppIncomingRoute
   '/legal': typeof AppLegalRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/activity': typeof AppActivityRoute
   '/assistant': typeof AppAssistantRoute
+  '/cloud': typeof AppCloudRoute
   '/dashboard': typeof AppDashboardRoute
   '/incoming': typeof AppIncomingRoute
   '/legal': typeof AppLegalRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/activity': typeof AppActivityRoute
   '/_app/assistant': typeof AppAssistantRoute
+  '/_app/cloud': typeof AppCloudRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/incoming': typeof AppIncomingRoute
   '/_app/legal': typeof AppLegalRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/activity'
     | '/assistant'
+    | '/cloud'
     | '/dashboard'
     | '/incoming'
     | '/legal'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/activity'
     | '/assistant'
+    | '/cloud'
     | '/dashboard'
     | '/incoming'
     | '/legal'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_app/activity'
     | '/_app/assistant'
+    | '/_app/cloud'
     | '/_app/dashboard'
     | '/_app/incoming'
     | '/_app/legal'
@@ -321,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cloud': {
+      id: '/_app/cloud'
+      path: '/cloud'
+      fullPath: '/cloud'
+      preLoaderRoute: typeof AppCloudRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/assistant': {
       id: '/_app/assistant'
       path: '/assistant'
@@ -341,6 +360,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppAssistantRoute: typeof AppAssistantRoute
+  AppCloudRoute: typeof AppCloudRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppIncomingRoute: typeof AppIncomingRoute
   AppLegalRoute: typeof AppLegalRoute
@@ -356,6 +376,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppAssistantRoute: AppAssistantRoute,
+  AppCloudRoute: AppCloudRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppIncomingRoute: AppIncomingRoute,
   AppLegalRoute: AppLegalRoute,
