@@ -32,7 +32,7 @@ export function monthFolderName(monthIdx0: number): string {
   return `${n}-${MONTHS_FR[monthIdx0]}`;
 }
 
-/** All sub-category folder names (SAE_DG, SAE_INT, ETA_MIN, ...). */
+/** All sub-category folder names for INCOMING (SAE_DG, SAE_INT, ETA_MIN, ...). */
 export function allSubFolders(): { code: string; label: string }[] {
   const out: { code: string; label: string }[] = [];
   for (const c of CATEGORIES) {
@@ -41,6 +41,16 @@ export function allSubFolders(): { code: string; label: string }[] {
     }
   }
   return out;
+}
+
+/** Sub-category folder names for OUTGOING — only two fixed folders. */
+export const OUTGOING_SUBS: { code: string; label: string }[] = [
+  { code: "Courriers_Administratifs", label: "Courriers Administratifs" },
+  { code: "Courriers_Techniques", label: "Courriers Techniques" },
+];
+
+function subsForGroup(group: string): { code: string; label: string }[] {
+  return group === FOLDER_OUTGOING ? OUTGOING_SUBS : allSubFolders();
 }
 
 /** Compute the full logical tree for a given year. */
@@ -53,7 +63,6 @@ export interface TreeNode {
 }
 
 export function buildLogicalYearTree(year: number): TreeNode {
-  const subs = allSubFolders();
   const months: TreeNode[] = [];
   for (let m = 0; m < 12; m++) {
     const mName = monthFolderName(m);
@@ -62,7 +71,7 @@ export function buildLogicalYearTree(year: number): TreeNode {
       name: g,
       path: `${mPath}/${g}`,
       kind: "folder",
-      children: subs.map((s) => ({
+      children: subsForGroup(g).map((s) => ({
         name: s.code,
         path: `${mPath}/${g}/${s.code}`,
         kind: "folder",
@@ -142,15 +151,14 @@ export async function cloudDelete(uid: string, relativePaths: string[]) {
  * folders, so this is the only way to make them exist for listing.
  */
 export async function cloudInitYear(uid: string, year: number, onProgress?: (n: number, total: number) => void) {
-  const subs = allSubFolders();
   const groups = [FOLDER_INCOMING, FOLDER_OUTGOING];
-  const total = 12 * groups.length * subs.length;
+  const total = 12 * groups.reduce((acc, g) => acc + subsForGroup(g).length, 0);
   let n = 0;
   const placeholder = new File([""], ".keep", { type: "text/plain" });
   for (let m = 0; m < 12; m++) {
     const mName = monthFolderName(m);
     for (const g of groups) {
-      for (const s of subs) {
+      for (const s of subsForGroup(g)) {
         const rel = `${year}/${mName}/${g}/${s.code}/.keep`;
         try {
           await cloudUpload(uid, rel, placeholder);
@@ -202,16 +210,15 @@ export async function localInitYear(
   year: number,
   onProgress?: (n: number, total: number) => void,
 ) {
-  const subs = allSubFolders();
   const groups = [FOLDER_INCOMING, FOLDER_OUTGOING];
-  const total = 12 * groups.length * subs.length;
+  const total = 12 * groups.reduce((acc, g) => acc + subsForGroup(g).length, 0);
   let n = 0;
   const yearDir = await ensureDir(root, [String(year)]);
   for (let m = 0; m < 12; m++) {
     const monthDir = await ensureDir(yearDir, [monthFolderName(m)]);
     for (const g of groups) {
       const gDir = await ensureDir(monthDir, [g]);
-      for (const s of subs) {
+      for (const s of subsForGroup(g)) {
         await ensureDir(gDir, [s.code]);
         n++;
         onProgress?.(n, total);
