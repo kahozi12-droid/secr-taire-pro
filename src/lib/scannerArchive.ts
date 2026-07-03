@@ -295,11 +295,14 @@ export async function localDelete(
 // SYNC (manual, both directions)
 // -----------------------------------------------------------------------------
 
-async function walkCloud(uid: string, relative: string): Promise<string[]> {
+export async function walkCloud(uid: string, relative: string): Promise<string[]> {
   const out: string[] = [];
   const { folders, files } = await cloudList(uid, relative);
   for (const f of files) if (f.name !== ".keep") out.push(f.path);
-  for (const d of folders) out.push(...(await walkCloud(uid, d.path)));
+  for (const d of folders) {
+    if (d.name === ".trash") continue;
+    out.push(...(await walkCloud(uid, d.path)));
+  }
   return out;
 }
 
