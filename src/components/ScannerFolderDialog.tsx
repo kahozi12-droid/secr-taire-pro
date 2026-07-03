@@ -256,6 +256,8 @@ function LocalPanel({
     rootRef.current = h;
     setRootName(h.name);
     onLocalRootChange?.(h, h.name);
+    const { setLocalRoot } = await import("@/lib/localRootStore");
+    setLocalRoot(h, h.name);
     setCwd("");
     void load();
     toast.success(`Dossier local connecté : ${h.name}`);
