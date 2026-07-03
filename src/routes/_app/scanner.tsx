@@ -105,28 +105,9 @@ function ScannerPage() {
     }
   }, [importFile]);
 
-  const connect = async () => {
-    if (!supported) {
-      toast.error(t("folderUnsupported"));
-      return;
-    }
-    try {
-      // @ts-expect-error showDirectoryPicker not yet in TS lib
-      const handle: FileSystemDirectoryHandle = await window.showDirectoryPicker({
-        mode: "read",
-        id: "scanner-folder",
-      });
-      dirHandleRef.current = handle;
-      setFolderName(handle.name);
-      setFolderStatus(roleKey, handle.name);
-      seenRef.current = new Set();
-      setPending([]);
-      await scanFolder();
-      toast.success(t("folderConnected") + " · " + handle.name);
-    } catch {
-      // user cancelled
-    }
-  };
+  // Folder picking is now handled by <ScannerFolderDialog />; it calls
+  // onLocalRootChange to wire the handle into the auto-watch loop below.
+
 
   // Poll the folder while connected
   useEffect(() => {
