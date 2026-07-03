@@ -438,6 +438,19 @@ function ScannerPage() {
           onCreated={onClassified}
         />
       )}
+
+      <ScannerFolderDialog
+        open={folderDialogOpen}
+        onOpenChange={setFolderDialogOpen}
+        onLocalRootChange={(handle, name) => {
+          dirHandleRef.current = handle;
+          setFolderName(name);
+          setFolderStatus(roleKey, name);
+          seenRef.current = new Set();
+          setPending([]);
+          if (handle) void scanFolder();
+        }}
+      />
     </div>
   );
 }
