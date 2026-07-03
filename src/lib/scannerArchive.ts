@@ -32,7 +32,7 @@ export function monthFolderName(monthIdx0: number): string {
   return `${n}-${MONTHS_FR[monthIdx0]}`;
 }
 
-/** All sub-category folder names (SAE_DG, SAE_INT, ETA_MIN, ...). */
+/** All sub-category folder names for INCOMING (SAE_DG, SAE_INT, ETA_MIN, ...). */
 export function allSubFolders(): { code: string; label: string }[] {
   const out: { code: string; label: string }[] = [];
   for (const c of CATEGORIES) {
@@ -41,6 +41,16 @@ export function allSubFolders(): { code: string; label: string }[] {
     }
   }
   return out;
+}
+
+/** Sub-category folder names for OUTGOING — only two fixed folders. */
+export const OUTGOING_SUBS: { code: string; label: string }[] = [
+  { code: "Courriers_Administratifs", label: "Courriers Administratifs" },
+  { code: "Courriers_Techniques", label: "Courriers Techniques" },
+];
+
+function subsForGroup(group: string): { code: string; label: string }[] {
+  return group === FOLDER_OUTGOING ? OUTGOING_SUBS : allSubFolders();
 }
 
 /** Compute the full logical tree for a given year. */
