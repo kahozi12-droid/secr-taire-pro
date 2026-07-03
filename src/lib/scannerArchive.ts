@@ -151,15 +151,14 @@ export async function cloudDelete(uid: string, relativePaths: string[]) {
  * folders, so this is the only way to make them exist for listing.
  */
 export async function cloudInitYear(uid: string, year: number, onProgress?: (n: number, total: number) => void) {
-  const subs = allSubFolders();
   const groups = [FOLDER_INCOMING, FOLDER_OUTGOING];
-  const total = 12 * groups.length * subs.length;
+  const total = 12 * groups.reduce((acc, g) => acc + subsForGroup(g).length, 0);
   let n = 0;
   const placeholder = new File([""], ".keep", { type: "text/plain" });
   for (let m = 0; m < 12; m++) {
     const mName = monthFolderName(m);
     for (const g of groups) {
-      for (const s of subs) {
+      for (const s of subsForGroup(g)) {
         const rel = `${year}/${mName}/${g}/${s.code}/.keep`;
         try {
           await cloudUpload(uid, rel, placeholder);
