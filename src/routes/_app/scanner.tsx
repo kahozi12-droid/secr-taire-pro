@@ -290,7 +290,7 @@ function ScannerPage() {
             <p className="text-sm text-muted-foreground">{t("folderUnsupported")}</p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={connect} disabled={!supported} variant={folderName ? "outline" : "default"}>
+            <Button onClick={() => setFolderDialogOpen(true)} variant={folderName ? "outline" : "default"}>
               {folderName ? <FolderOpen className="mr-2 h-4 w-4" /> : <Folder className="mr-2 h-4 w-4" />}
               {folderName ? t("reconnectFolder") : t("connectFolder")}
             </Button>
