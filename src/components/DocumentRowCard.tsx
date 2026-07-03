@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { useState } from "react";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { FileText, Download, CheckCircle2, Archive, Clock } from "lucide-react";
@@ -9,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
+import { ArchiveChoiceDialog } from "@/components/ArchiveChoiceDialog";
 
 export type DocumentRow = Tables<"documents">;
 
