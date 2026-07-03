@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { useState } from "react";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { FileText, Download, CheckCircle2, Archive, Clock } from "lucide-react";
@@ -9,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
+import { ArchiveChoiceDialog } from "@/components/ArchiveChoiceDialog";
 
 export type DocumentRow = Tables<"documents">;
 
@@ -31,10 +33,14 @@ export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
     window.open(data.signedUrl, "_blank");
   };
 
+  const [archiveOpen, setArchiveOpen] = useState(false);
+
   const updateStatus = async (status: "processed" | "archived") => {
     const { error } = await supabase.from("documents").update({ status }).eq("id", doc.id);
-    if (error) toast.error(error.message);
-    else { toast.success(t("saved")); onChanged(); }
+    if (error) { toast.error(error.message); return; }
+    toast.success(t("saved"));
+    onChanged();
+    if (status === "processed") setArchiveOpen(true);
   };
 
   const statusInfo = {
@@ -94,6 +100,7 @@ export function DocumentRowCard({ doc, onChanged, showPostpone }: Props) {
           )}
         </div>
       </div>
+      <ArchiveChoiceDialog open={archiveOpen} onOpenChange={setArchiveOpen} doc={doc} />
     </div>
   );
 }

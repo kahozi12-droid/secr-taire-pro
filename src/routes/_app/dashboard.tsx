@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen, CalendarDays } from "lucide-react";
+import { Inbox, Send, Clock, CheckCircle2, BookOpen, FileBarChart, Printer, FolderOpen, CalendarDays, RefreshCw, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/providers/AuthProvider";
@@ -9,6 +10,9 @@ import { PRINTERS } from "@/lib/printers";
 import { usePrinterFolderStatus } from "@/lib/printerStatus";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { ensureLocalRoot, useLocalRoot } from "@/lib/localRootStore";
+import { syncCloudToLocal, syncLocalToCloud } from "@/lib/scannerArchive";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -71,9 +75,11 @@ function StatCard({
 
 function Dashboard() {
   const { t, lang } = useI18n();
-  const { role, fullName } = useAuth();
+  const { role, fullName, user } = useAuth();
   const folderStatus = usePrinterFolderStatus();
   const directorLinked = !!folderStatus.director;
+  const localRoot = useLocalRoot();
+  const [syncing, setSyncing] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [recent, setRecent] = useState<Array<{ id: string; reference_code: string; title: string; type: string; category_sub: string; created_at: string }>>([]);
   const [activity, setActivity] = useState<Array<{ id: string; action: string; created_at: string; details: unknown }>>([]);
@@ -150,6 +156,25 @@ function Dashboard() {
     setLoadingDay(false);
   };
 
+  const runSync = async () => {
+    if (!user) return;
+    setSyncing(true);
+    try {
+      const root = await ensureLocalRoot();
+      if (!root) { toast.error(lang === "fr" ? "Aucun dossier local sélectionné" : "No local folder selected"); return; }
+      const year = new Date().getFullYear();
+      const up = await syncLocalToCloud(user.id, root, year);
+      const down = await syncCloudToLocal(user.id, root, year);
+      toast.success(
+        lang === "fr"
+          ? `Sync ${year} : ↑ ${up.uploaded} envoyé(s), ↓ ${down.downloaded} téléchargé(s)`
+          : `Sync ${year}: ↑ ${up.uploaded} uploaded, ↓ ${down.downloaded} downloaded`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync error");
+    } finally { setSyncing(false); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -159,6 +184,12 @@ function Dashboard() {
             {t("welcomeBack")}, {fullName} · {role === "director" ? t("roleDirector") : t("roleSecretary")}
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" onClick={runSync} disabled={syncing}>
+            {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            {lang === "fr" ? "Synchroniser" : "Synchronize"}
+            {localRoot.name && <span className="ml-1 text-xs text-muted-foreground">({localRoot.name})</span>}
+          </Button>
         {todayLabel && (
           <Popover open={popoverOpen} onOpenChange={(o) => { setPopoverOpen(o); if (!o) { setSelectedDay(null); setDaySummary(null); } }}>
             <PopoverTrigger asChild>
@@ -226,6 +257,7 @@ function Dashboard() {
             </PopoverContent>
           </Popover>
         )}
+        </div>
       </div>
 
 
